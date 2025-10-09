@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import com.example.edupayapp.navigation.AppNavigation
 import com.example.edupayapp.ui.theme.EduPayAppTheme
 
 class MainActivity : ComponentActivity() {
@@ -14,7 +15,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             EduPayAppTheme {
-                // Your NavHost will go here later
+                AppNavigation()
             }
         }
     }
