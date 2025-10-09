@@ -53,6 +53,7 @@ fun SignUpScreen(
     var phoneNumber by remember { mutableStateOf("") }
     var idNumber by remember { mutableStateOf("") }
     var phoneError by remember { mutableStateOf<String?>(null) }
+    var idNumberError by remember { mutableStateOf<String?>(null) }
 
     //Checks all the fields
     val isFormValid = name.isNotBlank() &&
@@ -143,6 +144,13 @@ fun SignUpScreen(
             label = "ID Number",
             value = idNumber,
             onValueChange = { idNumber = it },
+
+              //check validity again
+            idNumberError = if (idNumber.isNotEmpty() && !validateIdNumber(newValue)) {
+                "Please enter a valid ID number"
+            } else {
+                null
+            },
             placeholder = "Enter your ID number",
             keyboardType = KeyboardType.Number
         )
