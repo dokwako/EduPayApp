@@ -76,13 +76,13 @@ fun SignUpScreen(
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ){
-        Spacer( modifier = Modifier.height(60.dp))
+        Spacer( modifier = Modifier.height(120.dp))
 
         Text(
             text = "Create Account",
             fontSize = 32.sp,
             fontWeight = FontWeight.Bold,
-            color = Color(0xFF6B7280)
+            color = Color(0xFF3D74E0)
         )
 
         Spacer( modifier = Modifier.height(8.dp))
@@ -90,8 +90,8 @@ fun SignUpScreen(
         //Subtitle
         Text(
             text = "Welcome to EduPay",
-            fontSize = 14.sp,
-            color = Color(0xFF6B7280)
+            fontSize = 16.sp,
+            color = Color(0xFF27272A)
         )
 
         Spacer( modifier = Modifier.height(40.dp))
@@ -163,7 +163,7 @@ fun SignUpScreen(
             enabled = isFormValid,
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color(0xFF3B82F6), // blue when enabled
-                disabledContainerColor = Color(0xFF6B7280), // gray when disabled
+                disabledContainerColor = Color(0xFF7594D2), // gray when disabled
             ),
             shape = RoundedCornerShape(8.dp)
         ) {
