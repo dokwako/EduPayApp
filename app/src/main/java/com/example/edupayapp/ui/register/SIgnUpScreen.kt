@@ -1,5 +1,6 @@
 package com.example.edupayapp.ui.register
 
+import android.R.attr.id
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -41,6 +42,7 @@ import com.example.edupayapp.R
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SearchBarDefaults.InputField
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -59,7 +61,8 @@ fun SignUpScreen(
     val isFormValid = name.isNotBlank() &&
             phoneNumber.isNotBlank() &&
             idNumber.isNotBlank() &&
-            phoneError == null
+            phoneError == null &&
+            idNumberError == null
 
     //check phone number matches kenyan
     fun validateKenyanPhone(phoneNumber: String): Boolean {
@@ -68,6 +71,11 @@ fun SignUpScreen(
         // Remove any characters from the phone number
         return kenyanPhoneRegex.matches(phoneNumber.replace("\\s".toRegex(), ""))
     }
+    //check id number
+    fun validateIdNumber(idNumber: String): Boolean {
+        return idNumber.length >= 7 && idNumber.all { it.isDigit() }
+    }
+
 
     Column (
         modifier = Modifier
@@ -140,20 +148,33 @@ fun SignUpScreen(
         Spacer(modifier = Modifier.height(20.dp))
 
         //id number input
-        InputField(
-            label = "ID Number",
-            value = idNumber,
-            onValueChange = { idNumber = it },
+        Column {
+            InputField(
+                label = "ID Number",
+                value = idNumber,
+                onValueChange = { newValue ->
+                    idNumber = newValue
 
-              //check validity again
-            idNumberError = if (idNumber.isNotEmpty() && !validateIdNumber(newValue)) {
-                "Please enter a valid ID number"
-            } else {
-                null
-            },
-            placeholder = "Enter your ID number",
-            keyboardType = KeyboardType.Number
-        )
+                    //check validity
+                    idNumberError = if (newValue.isNotEmpty() && !validateIdNumber(newValue)) {
+                        "Please enter a valid ID number"
+                    } else {
+                        null
+                    }
+                },
+                placeholder = "Enter your ID number",
+                keyboardType = KeyboardType.Number,
+                isError = idNumberError != null
+            )
+        }
+        idNumberError?.let {
+            Text(
+                text = it,
+                color = Color.Red,
+                fontSize = 12.sp,
+                modifier = Modifier.padding(start = 4.dp, top = 4.dp)
+            )
+        }
 
         Spacer( modifier = Modifier.height(24.dp))
 
@@ -303,3 +324,4 @@ fun InputField(
         shape = RoundedCornerShape(12.dp)
     )
 }
+
