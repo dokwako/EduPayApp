@@ -14,7 +14,7 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:label="@string/app_name"
+            android:label=""
             android:theme="@style/Theme.EduPayApp.Splash">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
