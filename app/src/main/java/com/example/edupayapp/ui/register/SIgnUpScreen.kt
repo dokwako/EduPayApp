@@ -1,35 +1,20 @@
 package com.example.edupayapp.ui.register
 
-import android.R.attr.id
+// --- FIX 1: ADD ALL NECESSARY IMPORTS ---
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Divider
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -38,54 +23,38 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.edupayapp.R
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.SearchBarDefaults.InputField
+import com.example.edupayapp.ui.common.InputField
+import com.example.edupayapp.ui.common.SocialButton
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SignUpScreen(
-    onSignUpClick: () -> Unit = {},
+    viewModel: SignUpViewModel = viewModel(),
     onSignUpSuccess: () -> Unit = {},
     onSignInClick: () -> Unit = {}
 ) {
-    var name by remember { mutableStateOf("") }
-    var phoneNumber by remember { mutableStateOf("") }
-    var idNumber by remember { mutableStateOf("") }
-    var phoneError by remember { mutableStateOf<String?>(null) }
-    var idNumberError by remember { mutableStateOf<String?>(null) }
+    // --- FIX 2: THIS LINE IS NOW CORRECT ---
+    // It correctly gets the state from the `viewModel` instance.
+    val uiState by viewModel.uiState.collectAsState()
 
-    //Checks all the fields
-    val isFormValid = name.isNotBlank() &&
-            phoneNumber.isNotBlank() &&
-            idNumber.isNotBlank() &&
-            phoneError == null &&
-            idNumberError == null
+    // The validation check now reads from the `uiState` object.
+    val isFormValid = uiState.name.isNotBlank() &&
+            uiState.phoneNumber.isNotBlank() &&
+            uiState.idNumber.isNotBlank() &&
+            uiState.phoneError == null &&
+            uiState.idNumberError == null
 
-    //check phone number matches kenyan
-    fun validateKenyanPhone(phoneNumber: String): Boolean {
-        val kenyanPhoneRegex = Regex("^(07|01)\\d{8}$|^(\\+254|254)(7|1)\\d{8}$")
-
-        // Remove any characters from the phone number
-        return kenyanPhoneRegex.matches(phoneNumber.replace("\\s".toRegex(), ""))
-    }
-    //check id number
-    fun validateIdNumber(idNumber: String): Boolean {
-        return idNumber.length >= 7 && idNumber.all { it.isDigit() }
-    }
-
-
-    Column (
+    Column(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.White)
             .verticalScroll(rememberScrollState())
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
-    ){
-        Spacer( modifier = Modifier.height(120.dp))
+    ) {
+        Spacer(modifier = Modifier.height(120.dp))
 
         Text(
             text = "Create Account",
@@ -93,158 +62,102 @@ fun SignUpScreen(
             fontWeight = FontWeight.Bold,
             color = Color(0xFF3D74E0)
         )
-
-        Spacer( modifier = Modifier.height(8.dp))
-
-        //Subtitle
         Text(
             text = "Welcome to EduPay",
             fontSize = 16.sp,
             color = Color(0xFF27272A)
         )
 
-        Spacer( modifier = Modifier.height(40.dp))
+        Spacer(modifier = Modifier.height(40.dp))
 
-        //input fields
+        // --- FIX 3: ALL REFERENCES TO uiState WILL NOW WORK ---
         InputField(
             label = "Name",
-            value = name,
-            onValueChange = { name = it },
+            value = uiState.name,
+            onValueChange = { viewModel.onNameChange(it) },
             placeholder = "Enter your name"
         )
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        Column {
-            InputField(
-                label = "Phone Number",
-                value = phoneNumber,
-                onValueChange = { newValue ->
-                    phoneNumber = newValue // Update the phoneNumber
-
-                    //checks validity
-                    phoneError = if (newValue.isNotEmpty() && !validateKenyanPhone(newValue)) {
-                        "Please enter a valid Kenyan phone number"
-                    } else {
-                        null
-                    }
-                },
-                placeholder = "Enter your phone number",
-                keyboardType = KeyboardType.Phone,
-                isError = phoneError != null
-            )
-
-            //display phone error if invalid
-            if (phoneError != null) {
-                Text(
-                    text = phoneError!!,
-                    color = Color.Red,
-                    fontSize = 12.sp,
-                    modifier = Modifier.padding(start = 4.dp, top = 4.dp)
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(20.dp))
-
-        //id number input
-        Column {
-            InputField(
-                label = "ID Number",
-                value = idNumber,
-                onValueChange = { newValue ->
-                    idNumber = newValue
-
-                    //check validity
-                    idNumberError = if (newValue.isNotEmpty() && !validateIdNumber(newValue)) {
-                        "Please enter a valid ID number"
-                    } else {
-                        null
-                    }
-                },
-                placeholder = "Enter your ID number",
-                keyboardType = KeyboardType.Number,
-                isError = idNumberError != null
-            )
-        }
-        idNumberError?.let {
+        InputField(
+            label = "Phone Number",
+            value = uiState.phoneNumber,
+            onValueChange = { viewModel.onPhoneNumberChange(it) },
+            placeholder = "Enter your phone number",
+            keyboardType = KeyboardType.Phone,
+            isError = uiState.phoneError != null
+        )
+        if (uiState.phoneError != null) {
             Text(
-                text = it,
+                text = uiState.phoneError!!,
                 color = Color.Red,
                 fontSize = 12.sp,
                 modifier = Modifier.padding(start = 4.dp, top = 4.dp)
             )
         }
 
-        Spacer( modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(20.dp))
 
-        //send otp
-        Button(
-            onClick = {
-                if (isFormValid) {
-                    //send data to backend api ,request otp to send to number
-                    onSignUpSuccess()
-                }
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp),
-            enabled = isFormValid,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFF3B82F6), // blue when enabled
-                disabledContainerColor = Color(0xFF7594D2), // gray when disabled
-            ),
-            shape = RoundedCornerShape(8.dp)
-        ) {
+        InputField(
+            label = "ID Number",
+            value = uiState.idNumber,
+            onValueChange = { viewModel.onIdNumberChange(it) },
+            placeholder = "Enter your ID number",
+            keyboardType = KeyboardType.Number,
+            isError = uiState.idNumberError != null
+        )
+        if (uiState.idNumberError != null) {
             Text(
-                text = "Send OTP",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold
-            )
-        }
-
-        Spacer( modifier = Modifier.height(24.dp))
-
-        // divider with sign up
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Divider(
-                modifier = Modifier.weight(1f),
-                color = Color(0xFF6B7280)
-            )
-        }
-
-        Spacer( modifier = Modifier.height(24.dp))
-
-        //social login buttons
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center
-        ) {
-            // Google button
-            SocialButton(
-                onClick = {
-                    // TODO: Implement Google Sign In
-                },
-                iconRes = R.drawable.ic_google
-            )
-
-            Spacer(modifier = Modifier.width(16.dp))
-
-            // Facebook button
-            SocialButton(
-                onClick = {
-                    // TODO: Implement Facebook Sign In
-                },
-                iconRes = R.drawable.ic_facebook
+                text = uiState.idNumberError!!,
+                color = Color.Red,
+                fontSize = 12.sp,
+                modifier = Modifier.padding(start = 4.dp, top = 4.dp)
             )
         }
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // SIGN IN LINK
+        Button(
+            onClick = {
+                viewModel.onSendOtpClicked()
+                onSignUpSuccess()
+            },
+            modifier = Modifier.fillMaxWidth().height(56.dp),
+            enabled = isFormValid,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xFF3B82F6),
+                disabledContainerColor = Color(0xFF7594D2)
+            ),
+            shape = RoundedCornerShape(8.dp)
+        ) {
+            Text("Send OTP", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Divider(modifier = Modifier.weight(1f))
+            Text(" Or sign up with ", modifier = Modifier.padding(horizontal = 8.dp), color = Color.Gray)
+            Divider(modifier = Modifier.weight(1f))
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center
+        ) {
+            SocialButton(onClick = { /* TODO */ }, iconRes = R.drawable.ic_google)
+            Spacer(modifier = Modifier.width(16.dp))
+            SocialButton(onClick = { /* TODO */ }, iconRes = R.drawable.ic_facebook)
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
         Row {
             Text(
                 text = "Already have an account? ",
@@ -256,72 +169,8 @@ fun SignUpScreen(
                 fontSize = 14.sp,
                 color = Color(0xFF3B82F6),
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier.clickable {
-                    onSignInClick()  // Navigate to login screen when clicked
-                }
+                modifier = Modifier.clickable { onSignInClick() }
             )
         }
-
-        Spacer(modifier = Modifier.height(24.dp))
     }
 }
-
-@Composable
-fun SocialButton(
-    onClick: () -> Unit,
-    iconRes: Int
-) {
-    Box(
-        modifier = Modifier
-            .size(48.dp)
-            .border(1.dp, Color(0xFFE5E7EB), CircleShape)
-            .background(Color.White, CircleShape)
-            .clickable { onClick() },
-        contentAlignment = Alignment.Center
-    ) {
-        // Display the icon image
-        Image(
-            painter = painterResource(id = iconRes),
-            contentDescription = null,
-            modifier = Modifier.size(24.dp)
-        )
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun InputField(
-    label: String,
-    value: String,
-    onValueChange: (String) -> Unit,
-    placeholder: String = "",
-    keyboardType: KeyboardType = KeyboardType.Text,
-    isError: Boolean = false
-) {
-    OutlinedTextField(
-        value = value,
-        onValueChange = onValueChange,
-        label = { Text(label, color = Color(0xFF1A237E)) },
-        placeholder = { Text(placeholder, color = Color.Gray) },
-        singleLine = true,
-        isError = isError,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 4.dp),
-        keyboardOptions = KeyboardOptions(
-            keyboardType = keyboardType
-        ),
-
-        colors = TextFieldDefaults.colors(
-            focusedIndicatorColor = Color(0xFF3949AB),
-            unfocusedIndicatorColor = Color(0xFF9FA8DA),
-            cursorColor = Color(0xFF1A237E),
-            focusedLabelColor = Color(0xFF1A237E),
-            unfocusedLabelColor = Color(0xFF303F9F),
-            errorIndicatorColor = Color.Red,
-            errorCursorColor = Color.Red
-        ),
-        shape = RoundedCornerShape(12.dp)
-    )
-}
-
