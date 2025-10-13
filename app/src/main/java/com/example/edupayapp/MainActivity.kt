@@ -9,8 +9,6 @@ import com.example.edupayapp.ui.theme.EduPayAppTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
-        // Install the splash screen
-        val splashScreen = installSplashScreen()
 
         super.onCreate(savedInstanceState)
         setContent {
