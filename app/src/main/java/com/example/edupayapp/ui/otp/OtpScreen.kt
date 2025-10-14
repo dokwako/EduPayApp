@@ -24,10 +24,10 @@ fun OtpScreen(
     viewModel: OtpViewModel = viewModel(),
     onVerificationSuccess: () -> Unit
 ) {
-    // This line will now work correctly because `collectAsState` is imported.
+    
     val uiState by viewModel.uiState.collectAsState()
 
-    // FIX 2: All references to properties must come from the `uiState` object.
+    
     val isButtonEnabled = uiState.otpValue.length == 6
 
     Column(
@@ -57,13 +57,13 @@ fun OtpScreen(
         Spacer(modifier = Modifier.height(40.dp))
 
         OtpTextField(
-            otpText = uiState.otpValue, // Use uiState.otpValue
+            otpText = uiState.otpValue, 
             onOtpTextChange = { value, _ -> viewModel.onOtpChange(value) }
         )
 
         if (uiState.error != null) {
             Text(
-                // Use uiState.error and the `!!` operator because it's inside a null check.
+                
                 text = uiState.error!!,
                 color = Color.Red,
                 modifier = Modifier.padding(top = 8.dp)
