@@ -35,8 +35,7 @@ fun SignUpScreen(
     onSignUpSuccess: () -> Unit = {},
     onSignInClick: () -> Unit = {}
 ) {
-    // --- FIX 2: THIS LINE IS NOW CORRECT ---
-    // It correctly gets the state from the `viewModel` instance.
+    
     val uiState by viewModel.uiState.collectAsState()
 
     // The validation check now reads from the `uiState` object.
@@ -70,7 +69,7 @@ fun SignUpScreen(
 
         Spacer(modifier = Modifier.height(40.dp))
 
-        // --- FIX 3: ALL REFERENCES TO uiState WILL NOW WORK ---
+        
         InputField(
             label = "Name",
             value = uiState.name,
