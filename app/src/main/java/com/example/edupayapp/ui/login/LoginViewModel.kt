@@ -38,7 +38,7 @@ class LoginViewModel : ViewModel() {
     fun onNextClicked() {
         val currentPhoneNumber = _uiState.value.phoneNumber
         // --- FAKE BACKEND CHECK FOR DEMO ---
-        // In a real app, this is where you'd call your repository to check the number.
+    
         if (currentPhoneNumber == "0712345678") {
             // TODO: Signal navigation to the PIN screen.
             println("ViewModel: Login successful for $currentPhoneNumber")
