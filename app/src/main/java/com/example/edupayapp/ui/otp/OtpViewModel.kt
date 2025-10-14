@@ -27,7 +27,7 @@ class OtpViewModel : ViewModel() {
     fun onVerifyClicked() {
         val otp = _uiState.value.otpValue
 
-        if (otp == "123456") { // We pretend "123456" is the correct code
+        if (otp == "123456") { // pretend "123456" is the correct code
             _uiState.update { it.copy(error = null) } 
             // TODO: In the future, this will signal navigation to the UI.
             println("ViewModel: OTP Verification Successful!")
