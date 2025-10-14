@@ -100,8 +100,8 @@ fun OtpTextField(
         },
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
         decorationBox = {
-            // The `decorationBox` is where we draw our custom UI (the six boxes)
-            // around the invisible `BasicTextField`.
+            
+        
             Row(horizontalArrangement = Arrangement.Center) {
                 // This loop creates 6 text boxes.
                 repeat(otpCount) { index ->
