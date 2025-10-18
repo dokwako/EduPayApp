@@ -1,14 +1,18 @@
 package com.example.edupayapp.ui.otp
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 data class OtpUiState(
     val otpValue : String = "",
     val error : String? = null,
-    val isVerifying : Boolean = false
+    val isVerifying : Boolean = false,
+    val verificationSuccess: Boolean = false
 )
 
 class OtpViewModel : ViewModel() {
@@ -25,16 +29,21 @@ class OtpViewModel : ViewModel() {
 
     // verify otp
     fun onVerifyClicked() {
-        val otp = _uiState.value.otpValue
+        viewModelScope.launch {
+            // Show the "Verifying..." loading state.
+            _uiState.update { it.copy(isVerifying = true) }
+            delay(1500)
 
-        if (otp == "123456") { // pretend "123456" is the correct code
-            _uiState.update { it.copy(error = null) } 
-            // TODO: In the future, this will signal navigation to the UI.
-            println("ViewModel: OTP Verification Successful!")
-        } else {
-            // If the OTP is wrong, set an error message in the state. The UI will
-            // automatically see this change and display the error text.
-            _uiState.update { it.copy(error = "OTP Verification failed!") }
+            val otp = _uiState.value.otpValue
+            if (otp == "123456") {
+                //  On success, show the "Success!" state.
+                _uiState.update { it.copy(isVerifying = false, verificationSuccess = true) }
+            } else {
+                // On failure, stop loading and show the error.
+                _uiState.update {
+                    it.copy(isVerifying = false, error = "OTP Verification failed!")
+                }
+            }
         }
     }
 }
