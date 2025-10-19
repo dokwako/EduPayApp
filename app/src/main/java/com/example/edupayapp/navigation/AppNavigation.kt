@@ -18,6 +18,7 @@ fun AppNavigation() {
     val navController = rememberNavController()
 
     //nav host - container for all screens
+    //
     NavHost(
         navController = navController,
         startDestination = "welcome"
