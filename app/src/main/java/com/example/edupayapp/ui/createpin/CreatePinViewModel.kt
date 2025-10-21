@@ -46,7 +46,7 @@ class CreatePinViewModel : ViewModel() {
 
             // Show loading state
             _uiState.update { it.copy(isCreating = true) }
-            delay(1500) // Simulate network delay
+            delay(2000) // Simulate network delay
 
             // Show success state
             _uiState.update { it.copy(isCreating = false, pinCreationSuccess = true) }
