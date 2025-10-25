@@ -95,13 +95,21 @@ fun AppNavigation() {
         }
         composable("dashboard") {
             DashboardScreen(
-                onLogoutClicked = {
-                    // When logout is clicked, navigate back to the welcome screen.
-                    navController.navigate("welcome") {
-                        popUpTo(0)
-                    }
+                // Update callbacks to match the new bottom navigation
+                onNavigateToReceipts = { navController.navigate("receipts") }, // Changed
+                onNavigateToHelp = { navController.navigate("help") }, // Changed
+                onNavigateToChildDetails = { studentId ->
+                    // Navigate to a details screen, passing the ID
+                    navController.navigate("child_details/$studentId")
                 }
             )
+        }
+        composable("receipts") { /* TODO: Add ReceiptsScreen here */ }
+        composable("help") { /* TODO: Add HelpScreen here */ }
+        composable("child_details/{studentId}") { backStackEntry ->
+            // Get the studentId argument from the route
+            val studentId = backStackEntry.arguments?.getString("studentId")
+            // TODO: Add ChildDetailsScreen here, passing the studentId
         }
     }
 }

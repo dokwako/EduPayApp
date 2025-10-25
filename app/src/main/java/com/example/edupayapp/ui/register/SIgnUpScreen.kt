@@ -152,7 +152,7 @@ fun SignUpScreen(
         ) {
             SocialButton(onClick = { /* TODO */ }, iconRes = R.drawable.ic_google)
             Spacer(modifier = Modifier.width(16.dp))
-            SocialButton(onClick = { /* TODO */ }, iconRes = R.drawable.ic_facebook)
+            //SocialButton(onClick = { /* TODO */ }, iconRes = R.drawable.ic_facebook)
         }
 
         Spacer(modifier = Modifier.height(24.dp))

@@ -135,7 +135,7 @@ private fun LoginFormUI(
         ) {
             SocialButton(onClick = { /* TODO: Google Login */ }, iconRes = R.drawable.ic_google)
             Spacer(modifier = Modifier.width(16.dp))
-            SocialButton(onClick = { /* TODO: Facebook Login */ }, iconRes = R.drawable.ic_facebook)
+           // SocialButton(onClick = { /* TODO: Facebook Login */ }, iconRes = R.drawable.ic_facebook)
         }
 
         // This Spacer will now work correctly.
