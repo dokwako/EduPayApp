@@ -7,9 +7,11 @@ import androidx.navigation.compose.rememberNavController
 import com.example.edupayapp.ui.createpin.CreatePinScreen
 import com.example.edupayapp.ui.dashboard.DashboardScreen
 import com.example.edupayapp.ui.forgotpin.ForgotPinScreen
+import com.example.edupayapp.ui.help.HelpScreen
 import com.example.edupayapp.ui.login.LoginScreen
 import com.example.edupayapp.ui.otp.OtpScreen
 import com.example.edupayapp.ui.pin.PinScreen
+import com.example.edupayapp.ui.profile.ProfileScreen
 import com.example.edupayapp.ui.register.SignUpScreen
 import com.example.edupayapp.ui.welcome.WelcomeScreen
 
@@ -101,6 +103,30 @@ fun AppNavigation() {
                 onNavigateToChildDetails = { studentId ->
                     // Navigate to a details screen, passing the ID
                     navController.navigate("child_details/$studentId")
+                }
+            )
+        }
+        composable("profile") {
+            ProfileScreen(
+                onNavigateToChangePin = {
+                    // Navigate to the "Change PIN" flow, which starts with the CreatePinScreen.
+                    navController.navigate("create_pin")
+                },
+                onLogoutConfirmed = {
+                    // Navigate back to welcome and clear the stack
+                    navController.navigate("welcome") {
+                        popUpTo(0)
+                    }
+                },
+                onNavigateBack = {
+                    navController.popBackStack() // Standard back navigation
+                }
+            )
+        }
+        composable("help") {
+            HelpScreen(
+                onNavigateBack = {
+                    navController.popBackStack() // Go back to the previous screen (Dashboard)
                 }
             )
         }

@@ -28,7 +28,7 @@ import com.example.edupayapp.R // Make sure R is imported
 fun DashboardScreen(
     viewModel: DashboardViewModel = viewModel(),
     onNavigateToReceipts: () -> Unit, // Changed from History
-    onNavigateToHelp: () -> Unit, // Changed from Profile
+    onNavigateToProfile: () -> Unit,
     onNavigateToChildDetails: (studentId: String) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -42,8 +42,8 @@ fun DashboardScreen(
         },
         bottomBar = {
             DashboardBottomNavigationBar(
-                onNavigateToReceipts = onNavigateToReceipts, // Changed
-                onNavigateToHelp = onNavigateToHelp // Changed
+                onNavigateToReceipts = onNavigateToReceipts,
+                onNavigateToProfile = onNavigateToProfile
             )
         }
     ) { innerPadding ->
@@ -79,7 +79,7 @@ fun DashboardScreen(
                                 onClick = { onNavigateToChildDetails(child.studentId) }
                             )
                         }
-                        item { QuickActionsSection(onNavigateToReceipts, onNavigateToHelp) } // Pass navigation callbacks
+                        item { QuickActionsSection(onNavigateToReceipts, onNavigateToHelp) }
                     }
                 }
             }
@@ -98,9 +98,9 @@ private fun DashboardTopAppBar(
     TopAppBar(
         title = {
             Image(
-                painter = painterResource(id = R.drawable.ic_logo), // Use your logo
+                painter = painterResource(id = R.drawable.ic_logo),
                 contentDescription = "EduPay Logo",
-                modifier = Modifier.height(28.dp) // Adjust size
+                modifier = Modifier.height(28.dp)
             )
         },
         actions = {
@@ -258,10 +258,10 @@ private fun DashboardBottomNavigationBar(
         )
         // Changed to Help
         NavigationBarItem(
-            icon = { Icon(Icons.Default.HelpOutline, contentDescription = "Help") },
-            label = { Text("Help") },
+            icon = { Icon(Icons.Default.Person, contentDescription = "Profile") },
+            label = { Text("Profile") },
             selected = false,
-            onClick = onNavigateToHelp
+            onClick = onNavigateToProfile
         )
     }
 }
