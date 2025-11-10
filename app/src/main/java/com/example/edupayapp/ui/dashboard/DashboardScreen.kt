@@ -6,7 +6,15 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.* // Import all filled icons
+import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.HelpOutline
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Receipt
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -14,21 +22,24 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector // Import ImageVector
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.edupayapp.R // Make sure R is imported
+import com.example.edupayapp.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
     viewModel: DashboardViewModel = viewModel(),
-    onNavigateToReceipts: () -> Unit, // Changed from History
+    // --- FIX 2: Add all required navigation callbacks ---
+    onNavigateToHistory: () -> Unit,
     onNavigateToProfile: () -> Unit,
+    onNavigateToReceipts: () -> Unit,
+    onNavigateToHelp: () -> Unit,
     onNavigateToChildDetails: (studentId: String) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -41,8 +52,9 @@ fun DashboardScreen(
             )
         },
         bottomBar = {
+            // --- FIX 3: Pass the correct callbacks for the bottom bar ---
             DashboardBottomNavigationBar(
-                onNavigateToReceipts = onNavigateToReceipts,
+                onNavigateToHistory = onNavigateToHistory,
                 onNavigateToProfile = onNavigateToProfile
             )
         }
@@ -79,15 +91,19 @@ fun DashboardScreen(
                                 onClick = { onNavigateToChildDetails(child.studentId) }
                             )
                         }
-                        item { QuickActionsSection(onNavigateToReceipts, onNavigateToHelp) }
+                        // --- FIX 4: Pass the correct callbacks for Quick Actions ---
+                        item {
+                            QuickActionsSection(
+                                onReceiptsClick = onNavigateToReceipts,
+                                onHelpClick = onNavigateToHelp
+                            )
+                        }
                     }
                 }
             }
         }
     }
 }
-
-// --- Composable Sections ---
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -134,7 +150,7 @@ private fun TotalBalanceCard(userName: String, balance: Double) {
             ) {
                 Text("Hello, $userName!", color = Color.White, fontSize = 18.sp)
                 Icon(
-                    Icons.Default.Visibility, // Eye icon
+                    Icons.Default.Visibility,
                     contentDescription = "Toggle visibility",
                     tint = Color.White
                 )
@@ -157,16 +173,12 @@ private fun ChildCard(child: Child, onClick: () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
-        onClick = onClick // Make the whole card clickable
+        onClick = onClick
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Placeholder for initial/avatar if needed
-            // Box(modifier = Modifier.size(40.dp).background(Color.Gray, CircleShape))
-            // Spacer(Modifier.width(12.dp))
-
             Column(modifier = Modifier.weight(1f)) {
                 Text(child.name, fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
                 Text("${child.school} - Grade ${child.grade}", color = Color.Gray, fontSize = 14.sp)
@@ -181,13 +193,13 @@ private fun ChildCard(child: Child, onClick: () -> Unit) {
                 )
                 Text(
                     child.status,
-                    color = child.statusColor, // Use dynamic color from data
+                    color = child.statusColor,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Medium
                 )
             }
             Icon(
-                Icons.Default.ChevronRight, // Arrow icon replaces Pay Now button
+                Icons.Default.ChevronRight,
                 contentDescription = "View Details",
                 tint = Color.Gray
             )
@@ -216,7 +228,7 @@ private fun QuickActionsSection(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun RowScope.QuickActionItem(
-    icon: ImageVector, // Use ImageVector for Material Icons
+    icon: ImageVector,
     label: String,
     onClick: () -> Unit
 ) {
@@ -239,8 +251,9 @@ private fun RowScope.QuickActionItem(
 
 @Composable
 private fun DashboardBottomNavigationBar(
-    onNavigateToReceipts: () -> Unit, // Updated parameter
-    onNavigateToHelp: () -> Unit // Updated parameter
+    // --- FIX 5: Change parameters to match what the Scaffold is sending ---
+    onNavigateToHistory: () -> Unit,
+    onNavigateToProfile: () -> Unit
 ) {
     NavigationBar {
         NavigationBarItem(
@@ -249,14 +262,14 @@ private fun DashboardBottomNavigationBar(
             selected = true,
             onClick = { /* Already on Home */ }
         )
-        // Changed to Receipts
+
         NavigationBarItem(
-            icon = { Icon(Icons.Default.Receipt, contentDescription = "Receipts") },
-            label = { Text("Receipts") },
+            icon = { Icon(Icons.Default.History, contentDescription = "History") },
+            label = { Text("History") },
             selected = false,
-            onClick = onNavigateToReceipts
+            onClick = onNavigateToHistory
         )
-        // Changed to Help
+        // --- FIX 7: Change to Profile ---
         NavigationBarItem(
             icon = { Icon(Icons.Default.Person, contentDescription = "Profile") },
             label = { Text("Profile") },
@@ -269,12 +282,14 @@ private fun DashboardBottomNavigationBar(
 @Composable
 private fun DashboardErrorState() {
     Column(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
         Icon(
-            Icons.Default.Warning, // Or use a specific error icon
+            Icons.Default.Warning,
             contentDescription = "Error",
             tint = Color.Red,
             modifier = Modifier.size(48.dp)

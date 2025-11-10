@@ -9,25 +9,25 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-// Holds info for one child card.
+// Updated Child data class to match the UI's needs
 data class Child(
     val name: String,
     val school: String,
     val grade: String,
     val balance: Double,
-    val status : String,
+    val status: String,
     val statusColor: Color,
-    val studentId: String // Unique ID for later use
+    val studentId: String
 )
 
-// Holds all data for the dashboard screen.
+// Updated UI State to match the UI's needs
 data class DashboardUiState(
-    val userName: String = "John Doe", // Added User Name
+    val userName: String = "John Doe",
     val totalBalance: Double = 0.0,
     val children: List<Child> = emptyList(),
     val isLoading: Boolean = true,
     val error: String? = null,
-    val notificationCount: Int = 3 // Added notification count
+    val notificationCount: Int = 3
 )
 
 class DashboardViewModel : ViewModel() {
@@ -36,16 +36,15 @@ class DashboardViewModel : ViewModel() {
     val uiState = _uiState.asStateFlow()
 
     init {
-        // Automatically fetch data when the ViewModel is created.
         fetchDashboardData()
     }
 
     private fun fetchDashboardData() {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) } // Show loading state
+            _uiState.update { it.copy(isLoading = true) }
             delay(1500) // Simulate network delay
 
-            // Dummy data for the demo.
+            // Updated dummy data to match the Figma design
             val dummyChildren = listOf(
                 Child(
                     name = "Liam Lawson",
@@ -57,7 +56,7 @@ class DashboardViewModel : ViewModel() {
                     studentId = "1"
                 ),
                 Child(
-                    name = "Liam Lawson", // Using same name as design
+                    name = "Liam Lawson",
                     school = "Nakuru High School",
                     grade = "10",
                     balance = 2500.0,
@@ -77,17 +76,16 @@ class DashboardViewModel : ViewModel() {
             )
             val totalBalance = dummyChildren.sumOf { it.balance }
 
-            // Update state with dummy data
+            // Update state with new dummy data
             _uiState.update {
                 it.copy(
                     isLoading = false,
                     children = dummyChildren,
                     totalBalance = totalBalance,
-                    userName = "Denzil Okwako ",
+                    userName = "John Doe!",
                     notificationCount = 3
                 )
             }
         }
     }
 }
-
