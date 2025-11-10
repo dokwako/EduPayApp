@@ -2,6 +2,8 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    // You correctly added the serialization plugin
+    kotlin("plugin.serialization") version "2.0.21"
 }
 
 android {
@@ -57,7 +59,7 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     implementation("androidx.core:core-splashscreen:1.0.1")
-     //navigation
+    //navigation
     implementation("androidx.navigation:navigation-compose:2.7.7")
 
     //view model
@@ -65,10 +67,18 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.2")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.2")
 
-    implementation("androidx.compose.material:material-icons-extended")
     //
     implementation("androidx.compose.material:material-icons-extended:1.6.7")
 
+    // --- CORRECT SUPABASE DEPENDENCIES USING THE VERSION CATALOG ---
+    implementation(platform(libs.supabase.bom)) // Use the alias from libs.versions.toml
+    implementation(libs.supabase.postgrest)     // Use the alias
+    implementation(libs.supabase.auth)         // Use the alias
 
+    // Ktor Client is required by Supabase
+    implementation("io.ktor:ktor-client-android:2.3.12")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.1")
 
+    // Coroutine support
+    implementation(libs.kotlinx.coroutines.android)
 }
