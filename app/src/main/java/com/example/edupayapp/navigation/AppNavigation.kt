@@ -28,8 +28,8 @@ fun AppNavigation() {
         composable("welcome") {
             WelcomeScreen(
                 onGetStartedClick = {
-                navController.navigate("login")
-            }
+                    navController.navigate("login")
+                }
             )
         }
         composable("login") {
@@ -98,8 +98,10 @@ fun AppNavigation() {
         composable("dashboard") {
             DashboardScreen(
                 // Update callbacks to match the new bottom navigation
-                onNavigateToReceipts = { navController.navigate("receipts") }, // Changed
-                onNavigateToHelp = { navController.navigate("help") }, // Changed
+                onNavigateToHistory = { navController.navigate("receipts") }, // Changed
+                onNavigateToProfile = { navController.navigate("profile") }, // Changed
+                onNavigateToReceipts = { navController.navigate("receipts") },
+                onNavigateToHelp = { navController.navigate("help") },
                 onNavigateToChildDetails = { studentId ->
                     // Navigate to a details screen, passing the ID
                     navController.navigate("child_details/$studentId")
@@ -130,8 +132,13 @@ fun AppNavigation() {
                 }
             )
         }
-        composable("receipts") { /* TODO: Add ReceiptsScreen here */ }
-        composable("help") { /* TODO: Add HelpScreen here */ }
+        composable("history") {
+            // TODO: Add HistoryScreen here
+        }
+
+        composable("receipts") {
+        /* TODO: Add ReceiptsScreen here */ }
+
         composable("child_details/{studentId}") { backStackEntry ->
             // Get the studentId argument from the route
             val studentId = backStackEntry.arguments?.getString("studentId")
