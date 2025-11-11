@@ -23,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
@@ -55,6 +56,7 @@ fun InputField(
     onValueChange: (String) -> Unit,
     placeholder: String = "",
     keyboardType: KeyboardType = KeyboardType.Text,
+    visualTransformation: VisualTransformation = VisualTransformation.None,
     isError: Boolean = false
 ) {
     OutlinedTextField(
@@ -67,6 +69,7 @@ fun InputField(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 4.dp),
+        visualTransformation = visualTransformation,
         keyboardOptions = KeyboardOptions(
             keyboardType = keyboardType
         ),
