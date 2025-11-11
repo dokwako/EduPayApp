@@ -41,6 +41,9 @@ android {
     }
 }
 
+// Define the Ktor version as suggested by your friend
+val ktor_version = "3.2.2"
+
 dependencies {
 
     implementation(libs.androidx.core.ktx)
@@ -70,14 +73,24 @@ dependencies {
     //
     implementation("androidx.compose.material:material-icons-extended:1.6.7")
 
-    // --- CORRECT SUPABASE DEPENDENCIES USING THE VERSION CATALOG ---
-    implementation(platform(libs.supabase.bom)) // Use the alias from libs.versions.toml
-    implementation(libs.supabase.postgrest)     // Use the alias
-    implementation(libs.supabase.auth)         // Use the alias
+    // --- NEW DEPENDENCIES FROM YOUR FRIEND ---
 
-    // Ktor Client is required by Supabase
-    implementation("io.ktor:ktor-client-android:2.3.12")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.1")
+    //Supabase
+    implementation(platform("io.github.jan-tennert.supabase:bom:3.2.2"))
+    implementation("io.github.jan-tennert.supabase:auth-kt")
+    implementation("io.github.jan-tennert.supabase:postgrest-kt")
+    implementation("io.github.jan-tennert.supabase:storage-kt")
+    implementation("io.github.jan-tennert.supabase:compose-auth")
+
+    // Ktor Client (compatible with Supabase 3.2.2)
+    implementation("io.ktor:ktor-client-android:$ktor_version")
+    implementation("io.ktor:ktor-client-core:$ktor_version")
+    implementation("io.ktor:ktor-client-content-negotiation:$ktor_version")
+    implementation("io.ktor:ktor-serialization-kotlinx-json:$ktor_version")
+    implementation("io.ktor:ktor-client-logging:$ktor_version")
+
+    // --- END OF NEW DEPENDENCIES ---
+
 
     // Coroutine support
     implementation(libs.kotlinx.coroutines.android)
