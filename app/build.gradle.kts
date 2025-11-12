@@ -89,9 +89,8 @@ dependencies {
     implementation("io.ktor:ktor-serialization-kotlinx-json:$ktor_version")
     implementation("io.ktor:ktor-client-logging:$ktor_version")
 
+
     // --- END OF NEW DEPENDENCIES ---
-
-
     // Coroutine support
     implementation(libs.kotlinx.coroutines.android)
 }

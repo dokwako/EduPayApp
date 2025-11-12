@@ -129,7 +129,7 @@ private fun UnregisteredUserUI(onSignUpClicked: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Icon(painter = painterResource(id = R.drawable.ic_error_warning) )
+        Icon(painter = painterResource(id = R.drawable.ic_error_warning), contentDescription = "Error Warning" )
         Spacer(modifier = Modifier.height(24.dp))
         // NEW: Updated error text
         Text(
