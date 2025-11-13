@@ -23,7 +23,7 @@ import com.example.edupayapp.ui.common.InputField
 @Composable
 fun ForgotPinScreen(
     viewModel: ForgotPinViewModel = viewModel(),
-    onNavigateToOtp: () -> Unit
+    onNavigateToOtp: (email: String) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val isButtonEnabled = uiState.phoneNumber.isNotBlank() && uiState.error == null
@@ -75,7 +75,7 @@ fun ForgotPinScreen(
             onClick = {
                 viewModel.onNextClicked()
                 if (isButtonEnabled) {
-                    onNavigateToOtp()
+                    onNavigateToOtp(uiState.phoneNumber)
                 }
             },
             modifier = Modifier
