@@ -23,6 +23,7 @@ import kotlinx.coroutines.delay
 
 @Composable
 fun OtpScreen(
+    email: String,
     viewModel: OtpViewModel = viewModel(),
     onVerificationSuccess: () -> Unit
 ) {
@@ -52,7 +53,7 @@ fun OtpScreen(
                 OtpInputForm(
                     uiState = uiState,
                     onOtpChange = { viewModel.onOtpChange(it) },
-                    onVerifyClicked = { viewModel.onVerifyClicked() }
+                    onVerifyClicked = { viewModel.onVerifyClicked(email) }
                 )
             }
         }
