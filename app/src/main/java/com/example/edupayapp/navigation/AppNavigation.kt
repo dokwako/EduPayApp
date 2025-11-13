@@ -1,9 +1,11 @@
 package com.example.edupayapp.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.edupayapp.ui.createpin.CreatePinScreen
 import com.example.edupayapp.ui.dashboard.DashboardScreen
 import com.example.edupayapp.ui.forgotpin.ForgotPinScreen
@@ -20,11 +22,10 @@ fun AppNavigation() {
     val navController = rememberNavController()
 
     //nav host - container for all screens
-    //
     NavHost(
         navController = navController,
         startDestination = "welcome"
-    ){
+    ) {
         composable("welcome") {
             WelcomeScreen(
                 onGetStartedClick = {
@@ -41,22 +42,33 @@ fun AppNavigation() {
                     navController.navigate("signup")
                 }
             )
-
         }
+
+        // --- CHANGE #1: The SignUpScreen callback now provides the email ---
         composable("signup") {
             SignUpScreen(
-                onSignUpSuccess = {
-                    navController.navigate("otp_verification")
+                // This callback must be updated in SignUpScreen.kt to be (String) -> Unit
+                onSignUpSuccess = { email ->
+                    // We pass the email as part of the navigation route
+                    navController.navigate("otp_verification/$email")
                 },
                 onSignInClick = {
                     navController.navigate("login")
                 }
             )
-
         }
 
-        composable("otp_verification") {
+        // --- CHANGE #2: The OTP route is updated to receive the email ---
+        composable(
+            route = "otp_verification/{email}",
+            arguments = listOf(navArgument("email") { type = NavType.StringType })
+        ) { backStackEntry ->
+            // We extract the email from the navigation arguments
+            val email = backStackEntry.arguments?.getString("email") ?: ""
+
+            // And pass it to the OtpScreen, which now requires it
             OtpScreen(
+                email = email,
                 onVerificationSuccess = {
                     // After successful OTP, navigate to our new "Create PIN" screen.
                     navController.navigate("create_pin")
@@ -77,6 +89,7 @@ fun AppNavigation() {
                 }
             )
         }
+
         composable("create_pin") {
             CreatePinScreen(
                 onPinCreated = {
@@ -87,14 +100,18 @@ fun AppNavigation() {
                 }
             )
         }
+
+        // --- CHANGE #3: The Forgot PIN flow is also updated ---
         composable("forgot_pin") {
             ForgotPinScreen(
-                onNavigateToOtp = {
-                    // Reuses the OTP screen for identity verification.
-                    navController.navigate("otp_verification")
+                // This callback must also be updated in ForgotPinScreen.kt
+                onNavigateToOtp = { email ->
+                    // Reuses the OTP screen for identity verification by passing the email.
+                    navController.navigate("otp_verification/$email")
                 }
             )
         }
+
         composable("dashboard") {
             DashboardScreen(
                 // Update callbacks to match the new bottom navigation
@@ -108,6 +125,7 @@ fun AppNavigation() {
                 }
             )
         }
+
         composable("profile") {
             ProfileScreen(
                 onNavigateToChangePin = {
@@ -125,6 +143,7 @@ fun AppNavigation() {
                 }
             )
         }
+
         composable("help") {
             HelpScreen(
                 onNavigateBack = {
@@ -132,12 +151,14 @@ fun AppNavigation() {
                 }
             )
         }
+
         composable("history") {
             // TODO: Add HistoryScreen here
         }
 
         composable("receipts") {
-        /* TODO: Add ReceiptsScreen here */ }
+            /* TODO: Add ReceiptsScreen here */
+        }
 
         composable("child_details/{studentId}") { backStackEntry ->
             // Get the studentId argument from the route
