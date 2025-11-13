@@ -2,7 +2,7 @@ package com.example.edupayapp.ui.login
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.edupayapp.di.AppModule
+import com.example.edupayapp.data.supabase.AppModule
 import io.github.jan.supabase.auth.auth
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
