@@ -116,9 +116,16 @@ private fun LoginFormUI(
             enabled = isButtonEnabled,
             /*...styling...*/
         ) {
-            Text("Next", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            Text("Login ", fontSize = 16.sp, fontWeight = FontWeight.Bold)
         }
+        Spacer(modifier = Modifier.height(24.dp))
 
+        TextButton(
+            onClick = onNavigateToSignUp,
+
+        ) {
+            Text("Don't have an account? Sign Up" )
+        }
     }
 }
 
