@@ -28,7 +28,7 @@ import com.example.edupayapp.ui.common.SocialButton
 @Composable
 fun SignUpScreen(
     viewModel: SignUpViewModel = viewModel(),
-    onSignUpSuccess: () -> Unit = {},
+    onSignUpSuccess: (String) -> Unit = {},
     onSignInClick: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -41,7 +41,7 @@ fun SignUpScreen(
     // When it becomes true, it triggers the navigation.
     LaunchedEffect(uiState.signUpSuccess) {
         if (uiState.signUpSuccess) {
-            onSignUpSuccess()
+            onSignUpSuccess(uiState.email)
         }
     }
 
@@ -69,6 +69,13 @@ fun SignUpScreen(
 
             Spacer(modifier = Modifier.height(40.dp))
 
+//            InputField(
+//                label = "Name",
+//                value = uiState.name,
+//                onValueChange = { viewModel.onEmailChange(it) },
+//                placeholder = "Enter your Name",
+//                keyboardType = KeyboardType.Text
+//            )
             InputField(
                 label = "Email",
                 value = uiState.email,
@@ -128,7 +135,7 @@ fun SignUpScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center
             ) {
-                SocialButton(onClick = { /* TODO */ }, iconRes = R.drawable.ic_google)
+               // SocialButton(onClick = { /* TODO */ }, iconRes = R.drawable.ic_google)
                 //SocialButton(onClick = { /* TODO */ }, iconRes = R.drawable.ic_facebook)
             }
 
