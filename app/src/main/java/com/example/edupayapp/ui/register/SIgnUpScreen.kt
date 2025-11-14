@@ -139,6 +139,8 @@ fun SignUpScreen(
                 //SocialButton(onClick = { /* TODO */ }, iconRes = R.drawable.ic_facebook)
             }
 
+
+
             Spacer(modifier = Modifier.height(24.dp))
 
             Row {
