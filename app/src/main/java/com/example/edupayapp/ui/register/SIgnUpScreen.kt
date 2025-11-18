@@ -16,13 +16,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.edupayapp.R
 import com.example.edupayapp.ui.common.InputField
-import com.example.edupayapp.ui.common.SocialButton
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -34,8 +31,9 @@ fun SignUpScreen(
     val uiState by viewModel.uiState.collectAsState()
 
     // Updated validation logic for Email/Password
-    val isFormValid = uiState.email.isNotBlank() &&
-            uiState.password.isNotBlank()
+    val isFormValid = uiState.name.isNotBlank()&&
+            uiState.email.isNotBlank() &&
+            uiState.idNumber.isNotBlank()
 
     // This listens for the `signUpSuccess` flag from the ViewModel.
     // When it becomes true, it triggers the navigation.
@@ -68,14 +66,16 @@ fun SignUpScreen(
             )
 
             Spacer(modifier = Modifier.height(40.dp))
+            InputField(
+                label = "Name",
+                value = uiState.name,
+                onValueChange = { viewModel.onNameChange(it) },
+                placeholder = "Enter your name",
+                keyboardType = KeyboardType.Text
+            )
 
-//            InputField(
-//                label = "Name",
-//                value = uiState.name,
-//                onValueChange = { viewModel.onEmailChange(it) },
-//                placeholder = "Enter your Name",
-//                keyboardType = KeyboardType.Text
-//            )
+            Spacer(modifier = Modifier.height(20.dp))
+
             InputField(
                 label = "Email",
                 value = uiState.email,
@@ -87,12 +87,11 @@ fun SignUpScreen(
             Spacer(modifier = Modifier.height(20.dp))
 
             InputField(
-                label = "Password",
-                value = uiState.password,
-                onValueChange = { viewModel.onPasswordChange(it) },
-                placeholder = "Enter your password",
-                keyboardType = KeyboardType.Password,
-                visualTransformation = PasswordVisualTransformation()
+                label = "ID Number",
+                value = uiState.idNumber,
+                onValueChange = { viewModel.onIdNumberChange(it) },
+                placeholder = "Enter your ID number",
+                keyboardType = KeyboardType.Number,
             )
 
             if (uiState.error != null) {
@@ -106,7 +105,7 @@ fun SignUpScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             Button(
-                onClick = { viewModel.onSignUpClicked() },
+                onClick = { viewModel.onSendOtpClicked() },
                 modifier = Modifier.fillMaxWidth().height(56.dp),
                 enabled = isFormValid && !uiState.isLoading,
                 colors = ButtonDefaults.buttonColors(
@@ -115,19 +114,19 @@ fun SignUpScreen(
                 ),
                 shape = RoundedCornerShape(8.dp)
             ) {
-                Text("Sign Up", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                Text("Send OTP", fontSize = 16.sp, fontWeight = FontWeight.Bold)
             }
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Divider(modifier = Modifier.weight(1f))
-                Text(" Or sign up with ", modifier = Modifier.padding(horizontal = 8.dp), color = Color.Gray)
-                Divider(modifier = Modifier.weight(1f))
-            }
+//            Row(
+//                modifier = Modifier.fillMaxWidth(),
+//                verticalAlignment = Alignment.CenterVertically
+//            ) {
+//                Divider(modifier = Modifier.weight(1f))
+//                Text(" Or sign up with ", modifier = Modifier.padding(horizontal = 8.dp), color = Color.Gray)
+//                Divider(modifier = Modifier.weight(1f))
+//            }
 
             Spacer(modifier = Modifier.height(24.dp))
 
