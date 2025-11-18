@@ -3,6 +3,7 @@ package com.example.edupayapp.ui.otp
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.*
@@ -14,24 +15,25 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.edupayapp.ui.common.OtpTextField
 import kotlinx.coroutines.delay
 
 @Composable
 fun OtpScreen(
-    email: String,
+    email: String, // The email is passed in, which is perfect
     viewModel: OtpViewModel = viewModel(),
     onVerificationSuccess: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
+    // When verificationSuccess becomes true, this triggers.
     if (uiState.verificationSuccess) {
         LaunchedEffect(Unit) {
-            delay(1000)
+            delay(1000) // Wait 1 second to show success
             onVerificationSuccess()
         }
     }
@@ -42,6 +44,7 @@ fun OtpScreen(
             .background(Color.White),
         contentAlignment = Alignment.Center
     ) {
+        // Your UI state handling is excellent
         when {
             uiState.verificationSuccess -> {
                 SuccessUI(message = "Verification successful!")
@@ -50,7 +53,9 @@ fun OtpScreen(
                 LoadingUI(text = "Verifying...")
             }
             else -> {
+                // Pass the email down to the input form
                 OtpInputForm(
+                    email = email,
                     uiState = uiState,
                     onOtpChange = { viewModel.onOtpChange(it) },
                     onVerifyClicked = { viewModel.onVerifyClicked(email) }
@@ -62,11 +67,12 @@ fun OtpScreen(
 
 @Composable
 private fun OtpInputForm(
+    email: String, // Receive the email to display it
     uiState: OtpUiState,
     onOtpChange: (String) -> Unit,
     onVerifyClicked: () -> Unit
 ) {
-    val isButtonEnabled = uiState.otpValue.length == 6
+    val isButtonEnabled = uiState.otpValue.length == 6 && !uiState.isVerifying
 
     Column(
         modifier = Modifier
@@ -76,33 +82,43 @@ private fun OtpInputForm(
     ) {
         Spacer(modifier = Modifier.height(120.dp))
         Text(
-            text = "Verify Your Number",
+            // FIX: Changed text to "Email"
+            text = "Verify Your Email",
             fontSize = 32.sp,
             fontWeight = FontWeight.Bold,
             color = Color(0xFF3D74E0)
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = "Enter the 6-digit code sent to +254 7XX XXX XXX",
+            // FIX: Changed text to show the user's email
+            text = "Enter the 6-digit code sent to $email",
             fontSize = 16.sp,
             textAlign = TextAlign.Center,
             color = Color.Gray
         )
         Spacer(modifier = Modifier.height(40.dp))
-        OtpTextField(
-            otpText = uiState.otpValue,
-            onOtpTextChange = { value, _ -> onOtpChange(value) }
+
+        // FIX: Replaced custom OtpTextField with a standard one
+        OutlinedTextField(
+            value = uiState.otpValue,
+            onValueChange = onOtpChange,
+            label = { Text("6-Digit Code") },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            isError = uiState.error != null // Show error state
         )
+
         if (uiState.error != null) {
             Text(
                 text = uiState.error!!,
-                color = Color.Red,
+                color = MaterialTheme.colorScheme.error, // Use theme color for error
                 modifier = Modifier.padding(top = 8.dp)
             )
         }
         Spacer(modifier = Modifier.height(24.dp))
         Text(
-            text = "Didn't receive code? Resend (45s)",
+            text = "Didn't receive code? Resend", // TODO: Add resend logic later
             color = Color.Gray
         )
         Spacer(modifier = Modifier.weight(1f))
