@@ -2,13 +2,13 @@ package com.example.edupayapp.ui.login
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.edupayapp.data.supabase.AppModule
-import io.github.jan.supabase.auth.auth
+import com.example.edupayapp.Supabase // FIX: Import our global Supabase object
+import io.github.jan.supabase.auth.auth // FIX: This is the main import we need
+import io.github.jan.supabase.auth.providers.builtin.Email // FIX: Import for Email provider
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import io.github.jan.supabase.auth.providers.builtin.Email
 
 data class LoginUiState(
     val email: String = "",
@@ -19,12 +19,14 @@ data class LoginUiState(
     val showUnregisteredUserError: Boolean = false
 )
 
+// FIX: No Hilt, just a plain ViewModel
 class LoginViewModel : ViewModel() {
 
     private val _uiState = MutableStateFlow(LoginUiState())
     val uiState = _uiState.asStateFlow()
 
-    private val supabase = AppModule.supabase
+    // FIX: Get the client from our global Supabase object
+    private val supabase = Supabase.client
 
     fun onEmailChange(email: String) {
         _uiState.update { it.copy(email = email, error = null, showUnregisteredUserError = false) }
@@ -34,12 +36,11 @@ class LoginViewModel : ViewModel() {
         _uiState.update { it.copy(password = password, error = null, showUnregisteredUserError = false) }
     }
 
-    // NEW: Replaced fake logic with REAL Supabase call
     fun onLoginClicked() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
             try {
-                // This is the real network call
+                // This call will now work because the imports are correct
                 supabase.auth.signInWith(Email) {
                     this.email = _uiState.value.email
                     this.password = _uiState.value.password
@@ -48,8 +49,9 @@ class LoginViewModel : ViewModel() {
 
             } catch (e: Exception) {
                 val errorMessage = e.message ?: "An unknown error occurred"
+                // Your error handling is great
                 if (errorMessage.contains("Invalid login credentials")) {
-                    _uiState.update { it.copy(isLoading = false, showUnregisteredUserError = true) }
+                    _uiState.update { it.copy(isLoading = false, error = "Invalid email or password") }
                 } else {
                     _uiState.update { it.copy(isLoading = false, error = errorMessage) }
                 }
