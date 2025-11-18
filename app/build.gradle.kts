@@ -18,6 +18,10 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // Add the build config fields with your Supabase credentials
+        buildConfigField("String", "SUPABASE_URL", "\"https://erkqutbpbyqtnzasmdhj.supabase.co\"")
+        buildConfigField("String", "SUPABASE_KEY", "\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVya3F1dGJwYnlxdG56YXNtZGhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE4MTU4MTIsImV4cCI6MjA3NzM5MTgxMn0.R4p4-mesQFz2pBkETDCsQixet0Ks1MMjkpC5dZ66RVQ\"")
     }
 
     buildTypes {
@@ -38,10 +42,10 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
-// Define the Ktor version as suggested by your friend
 val ktor_version = "3.2.2"
 
 dependencies {
@@ -82,7 +86,7 @@ dependencies {
     implementation("io.github.jan-tennert.supabase:storage-kt")
     implementation("io.github.jan-tennert.supabase:compose-auth")
 
-    // Ktor Client (compatible with Supabase 3.2.2)
+    //Ktor Client (compatible with Supabase 3.2.2)
     implementation("io.ktor:ktor-client-android:$ktor_version")
     implementation("io.ktor:ktor-client-core:$ktor_version")
     implementation("io.ktor:ktor-client-content-negotiation:$ktor_version")
@@ -93,4 +97,8 @@ dependencies {
     // --- END OF NEW DEPENDENCIES ---
     // Coroutine support
     implementation(libs.kotlinx.coroutines.android)
+    // +++ ADD THE NEW PLAN (Retrofit and Gson) +++
+//    implementation("com.squareup.retrofit2:retrofit:2.11.0")
+//    implementation("com.squareup.retrofit2:converter-gson:2.11.0")
+//    implementation("com.google.code.gson:gson:2.11.0")
 }
