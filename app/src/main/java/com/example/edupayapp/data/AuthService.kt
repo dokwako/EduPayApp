@@ -11,14 +11,14 @@ import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.Json
 
 
-const val BASE_URL = "https://edupay-backend.onrender.com/api/accounts/"
+const val BASE_URL = "https://edupay-backend-pj75.onrender.com/api/accounts/"
 
 // Global Ktor HttpClient Setup
 val httpClient = HttpClient(CIO) {
     // Install JSON serialization plugin
     install(ContentNegotiation) {
         json(Json {
-            ignoreUnknownKeys = true // Ignore fields we don't define in models
+            ignoreUnknownKeys = true
             prettyPrint = true
             isLenient = true
         })
