@@ -34,6 +34,8 @@ fun LoginScreen(
     val uiState by viewModel.uiState.collectAsState()
 
     // Trigger navigation on successful login
+
+
     LaunchedEffect(uiState.loginSuccess) {
         if (uiState.loginSuccess) {
             onLoginSuccess()
