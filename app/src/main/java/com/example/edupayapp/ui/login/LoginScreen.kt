@@ -22,9 +22,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.edupayapp.R
+import com.example.edupayapp.R // Make sure you have R.drawable.ic_error_warning defined
 import com.example.edupayapp.ui.common.InputField
-import com.example.edupayapp.ui.common.SocialButton
 
 @Composable
 fun LoginScreen(
@@ -34,6 +33,7 @@ fun LoginScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
+    // Trigger navigation on successful login
     LaunchedEffect(uiState.loginSuccess) {
         if (uiState.loginSuccess) {
             onLoginSuccess()
@@ -45,6 +45,7 @@ fun LoginScreen(
             modifier = Modifier.fillMaxSize().padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            // Check for the specific "Log In failed" state (Unregistered User)
             if (uiState.showUnregisteredUserError) {
                 UnregisteredUserUI(onSignUpClicked = onNavigateToSignUp)
             } else {
@@ -58,6 +59,7 @@ fun LoginScreen(
             }
         }
 
+        // Show a loading spinner over the screen
         if (uiState.isLoading) {
             CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
         }
@@ -72,63 +74,102 @@ private fun LoginFormUI(
     onLoginClicked: () -> Unit,
     onNavigateToSignUp: () -> Unit
 ) {
+    // Button enabled when both fields are valid and not loading
     val isButtonEnabled = uiState.email.isNotBlank() && uiState.password.isNotBlank() && !uiState.isLoading
+    // Use the error state for coloring input fields
+    val isErrorState = uiState.error != null
 
     Column(
         modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Spacer(modifier = Modifier.height(120.dp))
-        Text(text = "Log In to EduPay", /*...styling...*/ )
+        Text(
+            text = "Log In to EduPay",
+            fontSize = 32.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF3D74E0)
+        )
+        Text(
+            text = "Welcome back!",
+            fontSize = 16.sp,
+            color = Color(0xFF27272A)
+        )
         Spacer(modifier = Modifier.height(40.dp))
 
-        // --- UI CHANGES ---
+        // --- Email Input ---
         InputField(
             label = "Email Address",
             value = uiState.email,
             onValueChange = onEmailChange,
             placeholder = "Enter your Email Address",
             keyboardType = KeyboardType.Email,
-            isError = uiState.error != null || uiState.showUnregisteredUserError
+            isError = isErrorState
         )
 
         Spacer(modifier = Modifier.height(20.dp))
 
+        // --- Password Input (for PIN/Password) ---
         InputField(
-            label = "Password",
+            label = "Password / PIN", // Use a label that encompasses both password and PIN
             value = uiState.password,
             onValueChange = onPasswordChange,
-            placeholder = "Enter your Password",
+            placeholder = "Enter your Password or PIN",
             keyboardType = KeyboardType.Password,
             visualTransformation = PasswordVisualTransformation(),
-            isError = uiState.error != null || uiState.showUnregisteredUserError
+            isError = isErrorState
         )
 
         if (uiState.error != null) {
-            Text(text = uiState.error!!, color = Color.Red, /*...*/ )
+            // Display general login error (e.g., "Invalid email or password")
+            Text(
+                text = uiState.error!!,
+                color = Color.Red,
+                modifier = Modifier.padding(top = 8.dp),
+                textAlign = TextAlign.Center
+            )
         }
 
         Spacer(modifier = Modifier.height(24.dp))
 
+        // --- Login Button ---
         Button(
             onClick = onLoginClicked,
             modifier = Modifier.fillMaxWidth().height(56.dp),
             enabled = isButtonEnabled,
-            /*...styling...*/
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xFF3B82F6),
+                disabledContainerColor = Color(0xFF7594D2)
+            ),
+            shape = RoundedCornerShape(8.dp)
         ) {
-            Text("Login ", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            Text("Login", fontSize = 16.sp, fontWeight = FontWeight.Bold)
         }
+
         Spacer(modifier = Modifier.height(24.dp))
 
-        TextButton(
-            onClick = onNavigateToSignUp,
-
+        // --- Sign Up Link (at the bottom, matching design placement) ---
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center
         ) {
-            Text("Don't have an account? Sign Up" )
+            Text(
+                text = "Don't have an account? ",
+                fontSize = 14.sp,
+                color = Color(0xFF6B7280)
+            )
+            Text(
+                text = "Sign Up",
+                fontSize = 14.sp,
+                color = Color(0xFF3B82F6),
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.clickable { onNavigateToSignUp() }
+            )
         }
     }
 }
 
+// UI for the "Log In failed" state (Unregistered User)
 @Composable
 private fun UnregisteredUserUI(onSignUpClicked: () -> Unit) {
     Column(
@@ -136,17 +177,33 @@ private fun UnregisteredUserUI(onSignUpClicked: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Icon(painter = painterResource(id = R.drawable.ic_error_warning), contentDescription = "Error Warning" )
-        Spacer(modifier = Modifier.height(24.dp))
-        // NEW: Updated error text
-        Text(
-            text = "No account found with this email. Would you like to Sign Up?",
-            /*...styling...*/
+        // Placeholder for the warning icon (assuming R.drawable.ic_error_warning exists)
+        Icon(
+            painter = painterResource(id = R.drawable.ic_error_warning),
+            contentDescription = "Error Warning",
+            tint = Color(0xFFDC2626), // Red color for error
+            modifier = Modifier.size(64.dp)
         )
         Spacer(modifier = Modifier.height(24.dp))
+        Text(
+            text = "No account found with this email. Would you like to Sign Up?",
+            fontSize = 20.sp,
+            fontWeight = FontWeight.SemiBold,
+            textAlign = TextAlign.Center,
+            color = Color(0xFF27272A),
+            modifier = Modifier.padding(horizontal = 16.dp)
+        )
+        Spacer(modifier = Modifier.height(24.dp))
+
         Button(
             onClick = onSignUpClicked,
-            /*...styling...*/
+            modifier = Modifier
+                .fillMaxWidth(0.6f) // Smaller width button
+                .height(56.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xFF3B82F6),
+            ),
+            shape = RoundedCornerShape(8.dp)
         ) {
             Text("Sign Up", fontSize = 16.sp, fontWeight = FontWeight.Bold)
         }
