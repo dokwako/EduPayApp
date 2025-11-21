@@ -25,12 +25,17 @@ import kotlinx.coroutines.delay
 
 @Composable
 fun CreatePinScreen(
+    email: String,
     viewModel: CreatePinViewModel = viewModel(),
     onPinCreated: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    // it waits 1 second, then calls the navigation function.
+    // Pass the email to the ViewModel immediately
+    LaunchedEffect(email) {
+        viewModel.initialize(email)
+    }
+
     if (uiState.pinCreationSuccess) {
         LaunchedEffect(Unit) {
             delay(1000)
@@ -44,7 +49,6 @@ fun CreatePinScreen(
             .background(Color.White),
         contentAlignment = Alignment.Center
     ) {
-        // `when` decides which UI to show based on the ViewModel state.
         when {
             uiState.pinCreationSuccess -> {
                 SuccessUI(message = "PIN set successfully!")
@@ -71,7 +75,9 @@ private fun CreatePinForm(
     onConfirmedPinChange: (String) -> Unit,
     onFinishClicked: () -> Unit
 ) {
-    val isButtonEnabled = uiState.pinValue.length == 4 && uiState.confirmedPinValue.length == 4
+    // FIX: Button enabled when both pins are 6 digits
+    val isButtonEnabled = uiState.pinValue.length == 6 && uiState.confirmedPinValue.length == 6 && !uiState.isCreating
+    val isError = uiState.error != null
 
     Column(
         modifier = Modifier
@@ -83,27 +89,37 @@ private fun CreatePinForm(
         Spacer(modifier = Modifier.height(120.dp))
         Text(text = "Secure Your Account", fontSize = 32.sp, fontWeight = FontWeight.Bold, color = Color(0xFF3D74E0))
         Spacer(modifier = Modifier.height(8.dp))
-        Text(text = "Create a 4-digit PIN for quick logins", fontSize = 16.sp, textAlign = TextAlign.Center, color = Color.Gray)
+        // FIX: Updated text to 6-digit PIN
+        Text(text = "Create a 6-digit PIN for quick logins", fontSize = 16.sp, textAlign = TextAlign.Center, color = Color.Gray)
         Spacer(modifier = Modifier.height(40.dp))
+
+        // First PIN Input
         Text(text = "Enter your PIN", color = Color.Gray)
         Spacer(modifier = Modifier.height(8.dp))
         OtpTextField(
             otpText = uiState.pinValue,
             onOtpTextChange = { value, _ -> onPinChange(value) },
-            otpCount = 4
+            otpCount = 6, // FIX: Changed to 6 digits
+            isError = isError && uiState.pinValue.isNotEmpty() && uiState.pinValue != uiState.confirmedPinValue
         )
+
         Spacer(modifier = Modifier.height(24.dp))
+
+        // Confirmation PIN Input
         Text(text = "Confirm your PIN", color = Color.Gray)
         Spacer(modifier = Modifier.height(8.dp))
         OtpTextField(
             otpText = uiState.confirmedPinValue,
             onOtpTextChange = { value, _ -> onConfirmedPinChange(value) },
-            otpCount = 4
+            otpCount = 6, // FIX: Changed to 6 digits
+            isError = isError && uiState.confirmedPinValue.isNotEmpty() && uiState.pinValue != uiState.confirmedPinValue
         )
+
         if (uiState.error != null) {
             Text(text = uiState.error!!, color = Color.Red, modifier = Modifier.padding(top = 8.dp))
         }
         Spacer(modifier = Modifier.weight(1f))
+
         Button(
             onClick = onFinishClicked,
             modifier = Modifier.fillMaxWidth().height(56.dp),

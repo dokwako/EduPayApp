@@ -22,7 +22,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.edupayapp.R // Make sure you have R.drawable.ic_error_warning defined
+import com.example.edupayapp.R
 import com.example.edupayapp.ui.common.InputField
 
 @Composable
@@ -32,9 +32,6 @@ fun LoginScreen(
     onNavigateToSignUp: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
-
-    // Trigger navigation on successful login
-
 
     LaunchedEffect(uiState.loginSuccess) {
         if (uiState.loginSuccess) {
@@ -47,7 +44,6 @@ fun LoginScreen(
             modifier = Modifier.fillMaxSize().padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Check for the specific "Log In failed" state (Unregistered User)
             if (uiState.showUnregisteredUserError) {
                 UnregisteredUserUI(onSignUpClicked = onNavigateToSignUp)
             } else {
@@ -61,7 +57,6 @@ fun LoginScreen(
             }
         }
 
-        // Show a loading spinner over the screen
         if (uiState.isLoading) {
             CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
         }
@@ -76,9 +71,7 @@ private fun LoginFormUI(
     onLoginClicked: () -> Unit,
     onNavigateToSignUp: () -> Unit
 ) {
-    // Button enabled when both fields are valid and not loading
     val isButtonEnabled = uiState.email.isNotBlank() && uiState.password.isNotBlank() && !uiState.isLoading
-    // Use the error state for coloring input fields
     val isErrorState = uiState.error != null
 
     Column(
@@ -99,7 +92,6 @@ private fun LoginFormUI(
         )
         Spacer(modifier = Modifier.height(40.dp))
 
-        // --- Email Input ---
         InputField(
             label = "Email Address",
             value = uiState.email,
@@ -111,9 +103,8 @@ private fun LoginFormUI(
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        // --- Password Input (for PIN/Password) ---
         InputField(
-            label = "Password / PIN", // Use a label that encompasses both password and PIN
+            label = "Password / PIN",
             value = uiState.password,
             onValueChange = onPasswordChange,
             placeholder = "Enter your Password or PIN",
@@ -123,7 +114,6 @@ private fun LoginFormUI(
         )
 
         if (uiState.error != null) {
-            // Display general login error (e.g., "Invalid email or password")
             Text(
                 text = uiState.error!!,
                 color = Color.Red,
@@ -134,7 +124,6 @@ private fun LoginFormUI(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // --- Login Button ---
         Button(
             onClick = onLoginClicked,
             modifier = Modifier.fillMaxWidth().height(56.dp),
@@ -150,7 +139,6 @@ private fun LoginFormUI(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // --- Sign Up Link (at the bottom, matching design placement) ---
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.Center
@@ -171,7 +159,6 @@ private fun LoginFormUI(
     }
 }
 
-// UI for the "Log In failed" state (Unregistered User)
 @Composable
 private fun UnregisteredUserUI(onSignUpClicked: () -> Unit) {
     Column(
@@ -179,11 +166,10 @@ private fun UnregisteredUserUI(onSignUpClicked: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        // Placeholder for the warning icon (assuming R.drawable.ic_error_warning exists)
         Icon(
             painter = painterResource(id = R.drawable.ic_error_warning),
             contentDescription = "Error Warning",
-            tint = Color(0xFFDC2626), // Red color for error
+            tint = Color(0xFFDC2626),
             modifier = Modifier.size(64.dp)
         )
         Spacer(modifier = Modifier.height(24.dp))
@@ -200,7 +186,7 @@ private fun UnregisteredUserUI(onSignUpClicked: () -> Unit) {
         Button(
             onClick = onSignUpClicked,
             modifier = Modifier
-                .fillMaxWidth(0.6f) // Smaller width button
+                .fillMaxWidth(0.6f)
                 .height(56.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color(0xFF3B82F6),
