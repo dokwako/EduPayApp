@@ -21,7 +21,7 @@ import com.example.edupayapp.ui.welcome.WelcomeScreen
 fun AppNavigation() {
     val navController = rememberNavController()
 
-    //nav host - container for all screens
+    // nav host - container for all screens
     NavHost(
         navController = navController,
         startDestination = "welcome"
@@ -36,7 +36,10 @@ fun AppNavigation() {
         composable("login") {
             LoginScreen(
                 onLoginSuccess = {
-                    navController.navigate("pin")
+                    // Navigate to Dashboard after successful Login (PIN is already confirmed)
+                    navController.navigate("dashboard") {
+                        popUpTo("welcome") { inclusive = true }
+                    }
                 },
                 onNavigateToSignUp = {
                     navController.navigate("signup")
@@ -44,12 +47,10 @@ fun AppNavigation() {
             )
         }
 
-        // --- CHANGE #1: The SignUpScreen callback now provides the email ---
         composable("signup") {
             SignUpScreen(
-                // This callback must be updated in SignUpScreen.kt to be (String) -> Unit
                 onSignUpSuccess = { email ->
-                    // We pass the email as part of the navigation route
+                    // PASS THE EMAIL to the OTP screen
                     navController.navigate("otp_verification/$email")
                 },
                 onSignInClick = {
@@ -58,40 +59,29 @@ fun AppNavigation() {
             )
         }
 
-        // --- CHANGE #2: The OTP route is updated to receive the email ---
         composable(
             route = "otp_verification/{email}",
             arguments = listOf(navArgument("email") { type = NavType.StringType })
         ) { backStackEntry ->
-            // We extract the email from the navigation arguments
             val email = backStackEntry.arguments?.getString("email") ?: ""
 
-            // And pass it to the OtpScreen, which now requires it
             OtpScreen(
                 email = email,
                 onVerificationSuccess = {
-                    // After successful OTP, navigate to our new "Create PIN" screen.
-                    navController.navigate("create_pin")
+                    // After successful OTP, PASS THE EMAIL to the Create PIN screen
+                    navController.navigate("create_pin/$email")
                 }
             )
         }
 
-        composable("pin") {
-            PinScreen(
-                onLoginSuccess = {
-                    navController.navigate("dashboard") {
-                        popUpTo("welcome") { inclusive = true }
-                    }
-                },
-                onForgotPinClicked = {
-                    // Connects the "Forgot PIN?" link to the recovery flow.
-                    navController.navigate("forgot_pin")
-                }
-            )
-        }
+        composable(
+            route = "create_pin/{email}",
+            arguments = listOf(navArgument("email") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val email = backStackEntry.arguments?.getString("email") ?: ""
 
-        composable("create_pin") {
             CreatePinScreen(
+                email = email, // Pass the email to the ViewModel for the final API call
                 onPinCreated = {
                     // After the PIN is created, go to the dashboard and clear the back stack.
                     navController.navigate("dashboard") {
@@ -101,26 +91,40 @@ fun AppNavigation() {
             )
         }
 
-        // --- CHANGE #3: The Forgot PIN flow is also updated ---
+        // NOTE: PinScreen route is used for re-entry PIN check after initial login
+        composable("pin") {
+            PinScreen(
+                onLoginSuccess = {
+                    navController.navigate("dashboard") {
+                        popUpTo("welcome") { inclusive = true }
+                    }
+                },
+                onForgotPinClicked = {
+                    navController.navigate("forgot_pin")
+                }
+            )
+        }
+
         composable("forgot_pin") {
             ForgotPinScreen(
-                // This callback must also be updated in ForgotPinScreen.kt
                 onNavigateToOtp = { email ->
                     // Reuses the OTP screen for identity verification by passing the email.
                     navController.navigate("otp_verification/$email")
+                },
+                // --- FIX: Add callback to navigate back to Login ---
+                onNavigateToLogin = {
+                    navController.navigate("login")
                 }
             )
         }
 
         composable("dashboard") {
             DashboardScreen(
-                // Update callbacks to match the new bottom navigation
-                onNavigateToHistory = { navController.navigate("receipts") }, // Changed
-                onNavigateToProfile = { navController.navigate("profile") }, // Changed
+                onNavigateToHistory = { navController.navigate("receipts") },
+                onNavigateToProfile = { navController.navigate("profile") },
                 onNavigateToReceipts = { navController.navigate("receipts") },
                 onNavigateToHelp = { navController.navigate("help") },
                 onNavigateToChildDetails = { studentId ->
-                    // Navigate to a details screen, passing the ID
                     navController.navigate("child_details/$studentId")
                 }
             )
@@ -129,17 +133,17 @@ fun AppNavigation() {
         composable("profile") {
             ProfileScreen(
                 onNavigateToChangePin = {
-                    // Navigate to the "Change PIN" flow, which starts with the CreatePinScreen.
-                    navController.navigate("create_pin")
+                    // This should pass the current user's email, which should be retrieved from tokenStorage in a real app.
+                    val userEmailPlaceholder = "logged_in_user@edupay.com"
+                    navController.navigate("create_pin/$userEmailPlaceholder")
                 },
                 onLogoutConfirmed = {
-                    // Navigate back to welcome and clear the stack
                     navController.navigate("welcome") {
                         popUpTo(0)
                     }
                 },
                 onNavigateBack = {
-                    navController.popBackStack() // Standard back navigation
+                    navController.popBackStack()
                 }
             )
         }
@@ -147,7 +151,7 @@ fun AppNavigation() {
         composable("help") {
             HelpScreen(
                 onNavigateBack = {
-                    navController.popBackStack() // Go back to the previous screen (Dashboard)
+                    navController.popBackStack()
                 }
             )
         }
@@ -161,7 +165,6 @@ fun AppNavigation() {
         }
 
         composable("child_details/{studentId}") { backStackEntry ->
-            // Get the studentId argument from the route
             val studentId = backStackEntry.arguments?.getString("studentId")
             // TODO: Add ChildDetailsScreen here, passing the studentId
         }
