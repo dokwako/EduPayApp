@@ -2,6 +2,33 @@ package com.example.edupayapp.data
 
 import kotlinx.serialization.Serializable
 
+// --- Storage Interface ---
+interface TokenStorage {
+    fun saveToken(token: String, email: String)
+    fun getToken(): String?
+    fun getEmail(): String?
+    fun clear()
+}
+
+// In-Memory implementation for testing
+class InMemoryTokenStorage : TokenStorage {
+    private var accessToken: String? = null
+    private var userEmail: String? = null
+
+    override fun saveToken(token: String, email: String) {
+        accessToken = token
+        userEmail = email
+    }
+
+    override fun getToken(): String? = accessToken
+    override fun getEmail(): String? = userEmail
+    override fun clear() {
+        accessToken = null
+        userEmail = null
+    }
+}
+
+
 // --- Requests ---
 
 @Serializable
