@@ -1,9 +1,9 @@
 package com.example.edupayapp.ui.createpin
 
+import PinSetupRequest
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.edupayapp.data.AuthService
-import com.example.edupayapp.data.PinSetupRequest
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -58,7 +58,7 @@ class CreatePinViewModel : ViewModel() {
                 return@launch
             }
 
-            // FIX: Check for 6-digit length
+            // FIX: Check for 6-digit length (Mandatory security requirement)
             if (pin.length != 6) {
                 _uiState.update { it.copy(error = "PIN must be 6 digits.") }
                 return@launch
