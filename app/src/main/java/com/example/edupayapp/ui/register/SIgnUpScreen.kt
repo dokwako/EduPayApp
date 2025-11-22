@@ -30,13 +30,11 @@ fun SignUpScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    // Updated validation logic for Email/Password
-    val isFormValid = uiState.name.isNotBlank()&&
+    // Validation checks only name, email, and ID
+    val isFormValid = uiState.name.isNotBlank() &&
             uiState.email.isNotBlank() &&
             uiState.idNumber.isNotBlank()
 
-    // This listens for the `signUpSuccess` flag from the ViewModel.
-    // When it becomes true, it triggers the navigation.
     LaunchedEffect(uiState.signUpSuccess) {
         if (uiState.signUpSuccess) {
             onSignUpSuccess(uiState.email)
@@ -105,7 +103,7 @@ fun SignUpScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             Button(
-                onClick = { viewModel.onSendOtpClicked() },
+                onClick = { viewModel.onRegisterClicked() },
                 modifier = Modifier.fillMaxWidth().height(56.dp),
                 enabled = isFormValid && !uiState.isLoading,
                 colors = ButtonDefaults.buttonColors(
@@ -114,31 +112,12 @@ fun SignUpScreen(
                 ),
                 shape = RoundedCornerShape(8.dp)
             ) {
-                Text("Send OTP", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                if (uiState.isLoading) {
+                    CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
+                } else {
+                    Text("Register & Send OTP", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                }
             }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-//            Row(
-//                modifier = Modifier.fillMaxWidth(),
-//                verticalAlignment = Alignment.CenterVertically
-//            ) {
-//                Divider(modifier = Modifier.weight(1f))
-//                Text(" Or sign up with ", modifier = Modifier.padding(horizontal = 8.dp), color = Color.Gray)
-//                Divider(modifier = Modifier.weight(1f))
-//            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center
-            ) {
-               // SocialButton(onClick = { /* TODO */ }, iconRes = R.drawable.ic_google)
-                //SocialButton(onClick = { /* TODO */ }, iconRes = R.drawable.ic_facebook)
-            }
-
-
 
             Spacer(modifier = Modifier.height(24.dp))
 
@@ -152,11 +131,6 @@ fun SignUpScreen(
                     modifier = Modifier.clickable { onSignInClick() }
                 )
             }
-        }
-
-        // Show a loading spinner over the screen
-        if (uiState.isLoading) {
-            CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
         }
     }
 }

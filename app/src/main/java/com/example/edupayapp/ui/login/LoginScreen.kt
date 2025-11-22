@@ -24,7 +24,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.edupayapp.R
 import com.example.edupayapp.ui.common.InputField
-import com.example.edupayapp.ui.common.SocialButton
 
 @Composable
 fun LoginScreen(
@@ -73,39 +72,54 @@ private fun LoginFormUI(
     onNavigateToSignUp: () -> Unit
 ) {
     val isButtonEnabled = uiState.email.isNotBlank() && uiState.password.isNotBlank() && !uiState.isLoading
+    val isErrorState = uiState.error != null
 
     Column(
         modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Spacer(modifier = Modifier.height(120.dp))
-        Text(text = "Log In to EduPay", /*...styling...*/ )
+        Text(
+            text = "Log In to EduPay",
+            fontSize = 32.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF3D74E0)
+        )
+        Text(
+            text = "Welcome back!",
+            fontSize = 16.sp,
+            color = Color(0xFF27272A)
+        )
         Spacer(modifier = Modifier.height(40.dp))
 
-        // --- UI CHANGES ---
         InputField(
             label = "Email Address",
             value = uiState.email,
             onValueChange = onEmailChange,
             placeholder = "Enter your Email Address",
             keyboardType = KeyboardType.Email,
-            isError = uiState.error != null || uiState.showUnregisteredUserError
+            isError = isErrorState
         )
 
         Spacer(modifier = Modifier.height(20.dp))
 
         InputField(
-            label = "Password",
+            label = "Password / PIN",
             value = uiState.password,
             onValueChange = onPasswordChange,
-            placeholder = "Enter your Password",
+            placeholder = "Enter your Password or PIN",
             keyboardType = KeyboardType.Password,
             visualTransformation = PasswordVisualTransformation(),
-            isError = uiState.error != null || uiState.showUnregisteredUserError
+            isError = isErrorState
         )
 
         if (uiState.error != null) {
-            Text(text = uiState.error!!, color = Color.Red, /*...*/ )
+            Text(
+                text = uiState.error!!,
+                color = Color.Red,
+                modifier = Modifier.padding(top = 8.dp),
+                textAlign = TextAlign.Center
+            )
         }
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -114,39 +128,72 @@ private fun LoginFormUI(
             onClick = onLoginClicked,
             modifier = Modifier.fillMaxWidth().height(56.dp),
             enabled = isButtonEnabled,
-            /*...styling...*/
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xFF3B82F6),
+                disabledContainerColor = Color(0xFF7594D2)
+            ),
+            shape = RoundedCornerShape(8.dp)
         ) {
-            Text("Login ", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            Text("Login", fontSize = 16.sp, fontWeight = FontWeight.Bold)
         }
+
         Spacer(modifier = Modifier.height(24.dp))
 
-        TextButton(
-            onClick = onNavigateToSignUp,
-
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center
         ) {
-            Text("Don't have an account? Sign Up" )
+            Text(
+                text = "Don't have an account? ",
+                fontSize = 14.sp,
+                color = Color(0xFF6B7280)
+            )
+            Text(
+                text = "Sign Up",
+                fontSize = 14.sp,
+                color = Color(0xFF3B82F6),
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.clickable { onNavigateToSignUp() }
+            )
         }
     }
 }
-
 @Composable
 private fun UnregisteredUserUI(onSignUpClicked: () -> Unit) {
+    // Assuming R.drawable.ic_error_warning exists
+    val icErrorWarning = R.drawable.ic_error_warning
+
     Column(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Icon(painter = painterResource(id = R.drawable.ic_error_warning), contentDescription = "Error Warning" )
-        Spacer(modifier = Modifier.height(24.dp))
-        // NEW: Updated error text
-        Text(
-            text = "No account found with this email. Would you like to Sign Up?",
-            /*...styling...*/
+        Icon(
+            painter = painterResource(id = icErrorWarning),
+            contentDescription = "Error Warning",
+            tint = Color(0xFFDC2626),
+            modifier = Modifier.size(64.dp)
         )
         Spacer(modifier = Modifier.height(24.dp))
+        Text(
+            text = "No account found with this email. Would you like to Sign Up?",
+            fontSize = 20.sp,
+            fontWeight = FontWeight.SemiBold,
+            textAlign = TextAlign.Center,
+            color = Color(0xFF27272A),
+            modifier = Modifier.padding(horizontal = 16.dp)
+        )
+        Spacer(modifier = Modifier.height(24.dp))
+
         Button(
             onClick = onSignUpClicked,
-            /*...styling...*/
+            modifier = Modifier
+                .fillMaxWidth(0.6f)
+                .height(56.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xFF3B82F6),
+            ),
+            shape = RoundedCornerShape(8.dp)
         ) {
             Text("Sign Up", fontSize = 16.sp, fontWeight = FontWeight.Bold)
         }

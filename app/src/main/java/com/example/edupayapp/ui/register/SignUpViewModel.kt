@@ -1,16 +1,13 @@
 package com.example.edupayapp.ui.register
 
+import ParentRegisterRequest
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.edupayapp.Supabase
-import io.github.jan.supabase.auth.auth
-import io.github.jan.supabase.auth.providers.builtin.OTP
+import com.example.edupayapp.data.AuthService
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
 
 data class SignUpUiState(
     val name: String = "",
@@ -26,8 +23,8 @@ class SignUpViewModel : ViewModel() {
     private val _uiState = MutableStateFlow(SignUpUiState())
     val uiState = _uiState.asStateFlow()
 
-    // We get the client directly from your Supabase object
-    private val supabase = Supabase.client
+    // Use the new AuthService
+    private val authService = AuthService()
 
     fun onNameChange(name: String) {
         _uiState.update { it.copy(name = name, error = null) }
@@ -41,22 +38,29 @@ class SignUpViewModel : ViewModel() {
         _uiState.update { it.copy(idNumber = idNumber, error = null) }
     }
 
-    fun onSendOtpClicked() {
+    fun onRegisterClicked() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
             try {
-                supabase.auth.signUpWith(OTP) {
-                    email = _uiState.value.email
+                // Create request object for the API
+                val request = ParentRegisterRequest(
+                    email = _uiState.value.email,
+                    full_name = _uiState.value.name,
+                    id_number = _uiState.value.idNumber
+                )
 
-                    // We send the extra data here
-                    data = buildJsonObject {
-                        put("full_name", _uiState.value.name)
-                        put("id_number", _uiState.value.idNumber)
-                    }
+                // Call the API
+                val result = authService.registerParent(request)
+
+                if (result.error != null) {
+                    // Handle API errors (e.g. "Email already exists")
+                    _uiState.update { it.copy(error = result.error, isLoading = false) }
+                } else {
+                    // Success! Move to OTP
+                    _uiState.update { it.copy(signUpSuccess = true, isLoading = false) }
                 }
-                _uiState.update { it.copy(signUpSuccess = true, isLoading = false) }
             } catch (e: Exception) {
-                _uiState.update { it.copy(error = e.message, isLoading = false) }
+                _uiState.update { it.copy(error = e.message ?: "Unknown error", isLoading = false) }
             }
         }
     }

@@ -91,6 +91,7 @@ fun OtpTextField(
     modifier: Modifier = Modifier,
     otpText: String,
     otpCount: Int = 6,
+    isError: Boolean = false,
     onOtpTextChange: (String, Boolean) -> Unit
 ) {
     BasicTextField(

@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -25,7 +26,15 @@ fun PinScreen(
     onForgotPinClicked: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val isButtonEnabled = uiState.pinValue.length == 4
+
+    // Button enabled when PIN is 6 digits and not loading
+    val isButtonEnabled = uiState.pinValue.length == 6 && !uiState.isLoading
+
+    LaunchedEffect(uiState.loginSuccess) {
+        if (uiState.loginSuccess) {
+            onLoginSuccess()
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -37,14 +46,14 @@ fun PinScreen(
         Spacer(modifier = Modifier.height(120.dp))
 
         Text(
-            text = "Enter Your PIN",
+            text = "Welcome back, ${viewModel.displayUserName}!", // Dynamic Name
             fontSize = 32.sp,
             fontWeight = FontWeight.Bold,
             color = Color(0xFF3D74E0)
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = "Enter your 4-digit PIN to continue",
+            text = "Enter your 6-digit PIN to continue",
             fontSize = 16.sp,
             textAlign = TextAlign.Center,
             color = Color.Gray
@@ -55,7 +64,8 @@ fun PinScreen(
         OtpTextField(
             otpText = uiState.pinValue,
             onOtpTextChange = { value, _ -> viewModel.onPinChange(value) },
-            otpCount = 4
+            otpCount = 6, // 6 digits
+            isError = uiState.error != null
         )
 
         if (uiState.error != null) {
@@ -78,12 +88,7 @@ fun PinScreen(
         Spacer(modifier = Modifier.weight(1f))
 
         Button(
-            onClick = {
-                viewModel.onLoginClicked()
-                if (viewModel.uiState.value.pinValue == "1234") {
-                    onLoginSuccess()
-                }
-            },
+            onClick = { viewModel.onLoginClicked() },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp),
@@ -94,7 +99,11 @@ fun PinScreen(
             ),
             shape = RoundedCornerShape(8.dp)
         ) {
-            Text("Log In", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            if (uiState.isLoading) {
+                CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
+            } else {
+                Text("Log In", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            }
         }
     }
 }

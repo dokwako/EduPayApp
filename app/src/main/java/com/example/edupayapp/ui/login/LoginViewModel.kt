@@ -1,10 +1,9 @@
 package com.example.edupayapp.ui.login
 
+import LoginRequest
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.edupayapp.Supabase // FIX: Import our global Supabase object
-import io.github.jan.supabase.auth.auth // FIX: This is the main import we need
-import io.github.jan.supabase.auth.providers.builtin.Email // FIX: Import for Email provider
+import com.example.edupayapp.data.AuthService
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -12,21 +11,19 @@ import kotlinx.coroutines.launch
 
 data class LoginUiState(
     val email: String = "",
-    val password: String = "",
+    val password: String = "", // This holds the user's PIN/Password
     val error: String? = null,
     val isLoading: Boolean = false,
     val loginSuccess: Boolean = false,
     val showUnregisteredUserError: Boolean = false
 )
 
-// FIX: No Hilt, just a plain ViewModel
 class LoginViewModel : ViewModel() {
 
     private val _uiState = MutableStateFlow(LoginUiState())
     val uiState = _uiState.asStateFlow()
 
-    // FIX: Get the client from our global Supabase object
-    private val supabase = Supabase.client
+    private val authService = AuthService()
 
     fun onEmailChange(email: String) {
         _uiState.update { it.copy(email = email, error = null, showUnregisteredUserError = false) }
@@ -38,23 +35,36 @@ class LoginViewModel : ViewModel() {
 
     fun onLoginClicked() {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, error = null) }
+            _uiState.update { it.copy(isLoading = true, error = null, showUnregisteredUserError = false) }
             try {
-                // This call will now work because the imports are correct
-                supabase.auth.signInWith(Email) {
-                    this.email = _uiState.value.email
-                    this.password = _uiState.value.password
+                // Ensure fields are not empty before calling the API
+                if (_uiState.value.email.isBlank() || _uiState.value.password.isBlank()) {
+                    _uiState.update { it.copy(isLoading = false, error = "Email and PIN/Password are required.") }
+                    return@launch
                 }
+
+                val request = LoginRequest(
+                    email = _uiState.value.email,
+                    password_or_pin = _uiState.value.password
+                )
+
+                // Call the Ktor login function
+                authService.login(request)
+
+                // Login successful
                 _uiState.update { it.copy(isLoading = false, loginSuccess = true) }
 
-            } catch (e: Exception) {
-                val errorMessage = e.message ?: "An unknown error occurred"
-                // Your error handling is great
-                if (errorMessage.contains("Invalid login credentials")) {
-                    _uiState.update { it.copy(isLoading = false, error = "Invalid email or password") }
+            } catch (e: IllegalStateException) {
+                // Handle Invalid credentials (401) and custom errors from AuthService
+                _uiState.update { it.copy(isLoading = false, error = null) }
+                if (e.message?.contains("Invalid credentials") == true) {
+                    _uiState.update { it.copy(showUnregisteredUserError = true) } // Triggers the 'Log In failed' UI
                 } else {
-                    _uiState.update { it.copy(isLoading = false, error = errorMessage) }
+                    _uiState.update { it.copy(error = e.message ?: "Authentication failed.") }
                 }
+            } catch (e: Exception) {
+                // Handle general network errors (which includes the detailed message from the AuthService fix)
+                _uiState.update { it.copy(isLoading = false, error = e.message ?: "Network error occurred") }
             }
         }
     }

@@ -1,12 +1,15 @@
 package com.example.edupayapp.ui.forgotpin
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -23,10 +26,19 @@ import com.example.edupayapp.ui.common.InputField
 @Composable
 fun ForgotPinScreen(
     viewModel: ForgotPinViewModel = viewModel(),
-    onNavigateToOtp: (email: String) -> Unit
+    onNavigateToOtp: (email: String) -> Unit,
+    onNavigateToLogin: () -> Unit // <-- NEW: Callback to go back to Login
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val isButtonEnabled = uiState.phoneNumber.isNotBlank() && uiState.error == null
+
+    val isButtonEnabled = uiState.email.isNotBlank() && uiState.error == null && !uiState.isLoading
+
+    // Triggers navigation after OTP is successfully requested from ViewModel
+    LaunchedEffect(uiState.otpSentSuccess) {
+        if (uiState.otpSentSuccess) {
+            onNavigateToOtp(uiState.email)
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -38,14 +50,14 @@ fun ForgotPinScreen(
         Spacer(modifier = Modifier.height(120.dp))
 
         Text(
-            text = "Reset Your PIN",
+            text = "Forgot PIN?",
             fontSize = 32.sp,
             fontWeight = FontWeight.Bold,
             color = Color(0xFF3D74E0)
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = "Enter your registered phone number to receive a verification code.",
+            text = "Enter your registered email address to receive a verification code.",
             fontSize = 16.sp,
             textAlign = TextAlign.Center,
             color = Color.Gray
@@ -54,11 +66,11 @@ fun ForgotPinScreen(
         Spacer(modifier = Modifier.height(40.dp))
 
         InputField(
-            label = "Phone Number",
-            value = uiState.phoneNumber,
-            onValueChange = { viewModel.onPhoneNumberChange(it) },
-            placeholder = "Enter your Phone Number",
-            keyboardType = KeyboardType.Phone,
+            label = "Email Address",
+            value = uiState.email,
+            onValueChange = { viewModel.onEmailChange(it) },
+            placeholder = "Enter your Email Address",
+            keyboardType = KeyboardType.Email,
             isError = uiState.error != null
         )
         if (uiState.error != null) {
@@ -69,15 +81,21 @@ fun ForgotPinScreen(
             )
         }
 
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // --- CLICKABLE IMPLEMENTED HERE ---
+        Text(
+            text = "Remember your PIN? Log In",
+            color = Color.Gray,
+            modifier = Modifier
+                .padding(top = 16.dp)
+                .clickable { onNavigateToLogin() } // <-- Call the new navigation function
+        )
+
         Spacer(modifier = Modifier.weight(1f))
 
         Button(
-            onClick = {
-                viewModel.onNextClicked()
-                if (isButtonEnabled) {
-                    onNavigateToOtp(uiState.phoneNumber)
-                }
-            },
+            onClick = { viewModel.onRequestOtpClicked() },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp),
@@ -88,7 +106,12 @@ fun ForgotPinScreen(
             ),
             shape = RoundedCornerShape(8.dp)
         ) {
-            Text("Send Code", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            if (uiState.isLoading) {
+                CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
+            } else {
+                Text("Send OTP", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            }
         }
     }
 }
+
