@@ -1,5 +1,13 @@
 package com.example.edupayapp.data
 
+import AuthMessageResponse
+import InMemoryTokenStorage
+import LoginRequest
+import LoginResponse
+import OtpVerificationRequest
+import ParentRegisterRequest
+import PinSetupRequest
+import TokenStorage
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.engine.cio.*
@@ -44,7 +52,6 @@ val httpClient = HttpClient(CIO) {
                 val token = tokenStorage.getToken()
                 if (token != null) BearerTokens(token, token) else null
             }
-            // FIX: The lambda receives an HttpRequestBuilder. Access its 'url' property.
             sendWithoutRequest { request ->
                 request.url.host == Url(BASE_URL).host
             }
@@ -70,7 +77,6 @@ class AuthService {
             }
             response.body<AuthMessageResponse>()
         } catch (e: ClientRequestException) {
-            // Handle 400 Bad Request error response
             val errorBody = e.response.body<AuthMessageResponse>()
             AuthMessageResponse(error = errorBody.error ?: e.response.status.description)
         } catch (e: Exception) {

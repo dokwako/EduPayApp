@@ -1,5 +1,3 @@
-package com.example.edupayapp.data
-
 import kotlinx.serialization.Serializable
 
 // --- Storage Interface ---
