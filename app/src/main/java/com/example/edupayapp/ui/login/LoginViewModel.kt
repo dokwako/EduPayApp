@@ -1,10 +1,9 @@
 package com.example.edupayapp.ui.login
 
+import LoginRequest
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.edupayapp.data.AuthService
-import com.example.edupayapp.data.LoginRequest
-import io.ktor.client.plugins.ClientRequestException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -12,7 +11,7 @@ import kotlinx.coroutines.launch
 
 data class LoginUiState(
     val email: String = "",
-    val password: String = "",
+    val password: String = "", // This holds the user's PIN/Password
     val error: String? = null,
     val isLoading: Boolean = false,
     val loginSuccess: Boolean = false,
@@ -56,7 +55,7 @@ class LoginViewModel : ViewModel() {
                 _uiState.update { it.copy(isLoading = false, loginSuccess = true) }
 
             } catch (e: IllegalStateException) {
-                // Handle exceptions thrown by AuthService (Invalid credentials)
+                // Handle Invalid credentials (401) and custom errors from AuthService
                 _uiState.update { it.copy(isLoading = false, error = null) }
                 if (e.message?.contains("Invalid credentials") == true) {
                     _uiState.update { it.copy(showUnregisteredUserError = true) } // Triggers the 'Log In failed' UI
@@ -64,7 +63,7 @@ class LoginViewModel : ViewModel() {
                     _uiState.update { it.copy(error = e.message ?: "Authentication failed.") }
                 }
             } catch (e: Exception) {
-                // Handle general network errors
+                // Handle general network errors (which includes the detailed message from the AuthService fix)
                 _uiState.update { it.copy(isLoading = false, error = e.message ?: "Network error occurred") }
             }
         }

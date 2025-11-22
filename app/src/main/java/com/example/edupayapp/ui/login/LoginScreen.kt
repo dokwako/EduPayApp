@@ -158,16 +158,18 @@ private fun LoginFormUI(
         }
     }
 }
-
 @Composable
 private fun UnregisteredUserUI(onSignUpClicked: () -> Unit) {
+    // Assuming R.drawable.ic_error_warning exists
+    val icErrorWarning = R.drawable.ic_error_warning
+
     Column(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
         Icon(
-            painter = painterResource(id = R.drawable.ic_error_warning),
+            painter = painterResource(id = icErrorWarning),
             contentDescription = "Error Warning",
             tint = Color(0xFFDC2626),
             modifier = Modifier.size(64.dp)
