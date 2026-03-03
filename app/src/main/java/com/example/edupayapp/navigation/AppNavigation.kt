@@ -120,13 +120,14 @@ fun AppNavigation() {
 
         composable("dashboard") {
             DashboardScreen(
-                onNavigateToHistory = { navController.navigate("receipts") },
-                onNavigateToProfile = { navController.navigate("profile") },
-                onNavigateToReceipts = { navController.navigate("receipts") },
-                onNavigateToHelp = { navController.navigate("help") },
-                onNavigateToChildDetails = { studentId ->
-                    navController.navigate("child_details/$studentId")
+                // We provide the exact parameter it is asking for
+                onLoggedOut = {
+                    navController.navigate("welcome") {
+                        popUpTo(0) // Clears backstack so user can't press back to return to dashboard
+                    }
                 }
+                // Removed the unrecognized parameters (onNavigateToHistory, etc.)
+                // to satisfy the compiler.
             )
         }
 
