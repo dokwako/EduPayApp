@@ -1,52 +1,78 @@
 package com.example.edupayapp.ui.dashboard
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.outlined.HelpOutline
+import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.material.icons.outlined.PersonOutline
+import androidx.compose.material.icons.outlined.ReceiptLong
+import androidx.compose.material.icons.outlined.Schedule
+import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-// --- FIX: ADD DATA MODEL IMPORTS ---
 import com.example.edupayapp.data.ChildDetail
 import com.example.edupayapp.data.DashboardSummaryResponse
 import com.example.edupayapp.data.FinancialSummary
-import com.example.edupayapp.data.RecentTransaction
-// ------------------------------------
 import java.text.NumberFormat
 import java.util.*
 
 @Composable
 fun DashboardScreen(
     viewModel: DashboardViewModel = viewModel(),
-    onLoggedOut: () -> Unit
+    onLoggedOut: () -> Unit,
+    onNavigateToProfile: () -> Unit,
+    onNavigateToHistory: () -> Unit,
+    onNavigateToReceipts: () -> Unit,
+    onNavigateToHelp: () -> Unit,
+    onChildClicked: (String, String, String, String, String) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
     Scaffold(
         topBar = {
-            DashboardTopBar(onLogoutClicked = {
-                viewModel.logout()
-                onLoggedOut()
-            })
-        }
+            DashboardTopBar()
+        },
+        bottomBar = {
+            DashboardBottomNavigation(
+                onNavigateToHistory = onNavigateToHistory,
+                onNavigateToProfile = onNavigateToProfile
+            )
+        },
+        containerColor = Color(0xFFF9FAFB)
     ) { padding ->
-        Box(modifier = Modifier.fillMaxSize().padding(padding).background(Color(0xFFF7F7F7))) {
+        Box(modifier = Modifier.fillMaxSize().padding(padding)) {
             when {
                 uiState.isLoading -> LoadingIndicator()
                 uiState.error != null -> ErrorMessage(uiState.error!!)
-                uiState.summary != null -> DashboardContent(uiState.summary!!)
+                uiState.summary != null -> DashboardContent(
+                    summary = uiState.summary!!,
+                    onChildClicked = onChildClicked,
+                    onNavigateToReceipts = onNavigateToReceipts,
+                    onNavigateToHelp = onNavigateToHelp
+                )
             }
         }
     }
@@ -54,16 +80,344 @@ fun DashboardScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DashboardTopBar(onLogoutClicked: () -> Unit) {
+fun DashboardTopBar() {
     TopAppBar(
-        title = { Text("EduPay Dashboard", color = Color.White, fontWeight = FontWeight.Bold) },
-        colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFF3B82F6)),
+        title = {
+            Text(
+                text = buildAnnotatedString {
+                    withStyle(style = SpanStyle(color = Color(0xFF10B981), fontWeight = FontWeight.ExtraBold, fontSize = 24.sp)) {
+                        append("Edu")
+                    }
+                    withStyle(style = SpanStyle(color = Color(0xFF3B82F6), fontWeight = FontWeight.ExtraBold, fontSize = 24.sp)) {
+                        append("Pay")
+                    }
+                }
+            )
+        },
         actions = {
-            IconButton(onClick = onLogoutClicked) {
-                Icon(Icons.Filled.ExitToApp, contentDescription = "Logout", tint = Color.White)
+            BadgedBox(
+                badge = {
+                    Badge(
+                        containerColor = Color.Red,
+                        contentColor = Color.White
+                    ) { Text("5") }
+                },
+                modifier = Modifier.padding(end = 16.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Notifications,
+                    contentDescription = "Notifications",
+                    modifier = Modifier.size(28.dp),
+                    tint = Color(0xFF374151)
+                )
             }
-        }
+        },
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = Color(0xFFF9FAFB),
+            scrolledContainerColor = Color(0xFFF9FAFB)
+        )
     )
+}
+
+@Composable
+fun DashboardBottomNavigation(
+    onNavigateToHistory: () -> Unit,
+    onNavigateToProfile: () -> Unit
+) {
+    NavigationBar(
+        containerColor = Color.White,
+        tonalElevation = 8.dp
+    ) {
+        NavigationBarItem(
+            selected = true,
+            onClick = { /* Stay on Dashboard */ },
+            icon = { Icon(Icons.Filled.Home, contentDescription = "Home") },
+            label = { Text("Home", fontSize = 10.sp) },
+            colors = NavigationBarItemDefaults.colors(
+                selectedIconColor = Color(0xFF3B82F6),
+                selectedTextColor = Color(0xFF3B82F6),
+                indicatorColor = Color.Transparent
+            )
+        )
+        NavigationBarItem(
+            selected = false,
+            onClick = onNavigateToHistory,
+            icon = { Icon(Icons.Outlined.Schedule, contentDescription = "History") }
+        )
+        NavigationBarItem(
+            selected = false,
+            onClick = onNavigateToProfile,
+            icon = { Icon(Icons.Outlined.PersonOutline, contentDescription = "Profile") }
+        )
+    }
+}
+
+@Composable
+fun DashboardContent(
+    summary: DashboardSummaryResponse,
+    onChildClicked: (String, String, String, String, String) -> Unit,
+    onNavigateToReceipts: () -> Unit,
+    onNavigateToHelp: () -> Unit
+) {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize().padding(horizontal = 24.dp),
+        contentPadding = PaddingValues(top = 8.dp, bottom = 24.dp),
+        verticalArrangement = Arrangement.spacedBy(24.dp)
+    ) {
+        item {
+            val userName = summary.user.full_name.substringBefore(" ")
+            BlueBalanceCard(
+                userName = userName,
+                financialSummary = summary.financial_summary
+            )
+        }
+
+        item {
+            Text(
+                text = "My Children",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF111827)
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+
+        items(summary.children) { child ->
+            ChildSummaryCard(
+                child = child,
+                onChildClicked = {
+                    val fullName = "${child.first_name} ${child.last_name}"
+                    val formattedAmount = formatCurrency(child.outstanding_balance, "KES")
+
+                    val statusText = when {
+                        child.outstanding_balance > 20000 -> "Overdue"
+                        child.outstanding_balance > 0 -> "Due soon"
+                        else -> "Paid"
+                    }
+
+                    onChildClicked(
+                        child.student_id.toString(),
+                        fullName,
+                        child.school_name,
+                        formattedAmount,
+                        statusText
+                    )
+                }
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+        }
+
+        item {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Quick Actions",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF111827)
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            QuickActionsRow(
+                onNavigateToReceipts = onNavigateToReceipts,
+                onNavigateToHelp = onNavigateToHelp
+            )
+        }
+    }
+}
+
+@Composable
+fun BlueBalanceCard(userName: String, financialSummary: FinancialSummary) {
+    var isBalanceVisible by remember { mutableStateOf(true) }
+
+    val gradientBrush = Brush.linearGradient(
+        colors = listOf(Color(0xFF3B82F6), Color(0xFF60A5FA))
+    )
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(gradientBrush)
+            .padding(24.dp)
+    ) {
+        Column {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Hello $userName!",
+                    color = Color(0xFFD1FAE5),
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                IconButton(
+                    onClick = { isBalanceVisible = !isBalanceVisible },
+                    modifier = Modifier.size(24.dp)
+                ) {
+                    Icon(
+                        imageVector = if (isBalanceVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
+                        contentDescription = "Toggle Balance",
+                        tint = Color.White
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text(
+                text = "Total Outstanding Balance",
+                color = Color.White.copy(alpha = 0.9f),
+                fontSize = 14.sp
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Text(
+                text = if (isBalanceVisible) {
+                    formatCurrency(financialSummary.total_outstanding_balance, financialSummary.currency)
+                } else {
+                    "KES ***,***"
+                },
+                color = Color.White,
+                fontSize = 32.sp,
+                fontWeight = FontWeight.ExtraBold
+            )
+        }
+    }
+}
+
+@Composable
+fun ChildSummaryCard(child: ChildDetail, onChildClicked: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onChildClicked() },
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        border = BorderStroke(1.dp, Color(0xFFE5E7EB))
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .background(Color(0xFF84CC16), CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = child.first_name.first().toString(),
+                    color = Color.White,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "${child.first_name} ${child.last_name}",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color(0xFF111827)
+                )
+                Text(
+                    text = child.school_name,
+                    fontSize = 12.sp,
+                    color = Color.Gray
+                )
+                Text(
+                    text = child.student_class,
+                    fontSize = 12.sp,
+                    color = Color.Gray
+                )
+            }
+
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                    text = formatCurrency(child.outstanding_balance, "KES"),
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF111827)
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                val (pillColor, pillText) = when {
+                    child.outstanding_balance > 20000 -> Color(0xFFEF4444) to "Overdue"
+                    child.outstanding_balance > 0 -> Color(0xFFF59E0B) to "Due soon"
+                    else -> Color(0xFF9CA3AF) to "Paid"
+                }
+
+                Box(
+                    modifier = Modifier
+                        .background(pillColor.copy(alpha = 0.2f), RoundedCornerShape(16.dp))
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                ) {
+                    Text(text = pillText, color = pillColor, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            Icon(
+                imageVector = Icons.Rounded.ChevronRight,
+                contentDescription = "View details",
+                tint = Color.Gray
+            )
+        }
+    }
+}
+
+@Composable
+fun QuickActionsRow(
+    onNavigateToReceipts: () -> Unit,
+    onNavigateToHelp: () -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        QuickActionCard(
+            title = "Receipts",
+            icon = { Icon(Icons.Outlined.ReceiptLong, contentDescription = null, tint = Color.Gray) },
+            onClick = onNavigateToReceipts
+        )
+        QuickActionCard(
+            title = "Help",
+            icon = { Icon(Icons.Outlined.HelpOutline, contentDescription = null, tint = Color.Gray) },
+            onClick = onNavigateToHelp
+        )
+    }
+}
+
+@Composable
+fun QuickActionCard(title: String, icon: @Composable () -> Unit, onClick: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .size(90.dp)
+            .border(1.dp, Color(0xFFE5E7EB), RoundedCornerShape(12.dp))
+            .background(Color.White, RoundedCornerShape(12.dp))
+            .clickable { onClick() }
+            .padding(12.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        icon()
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(text = title, fontSize = 12.sp, color = Color(0xFF374151))
+    }
+}
+
+fun formatCurrency(amount: Double, currency: String): String {
+    val numericAmount = if (amount.isNaN()) 0.0 else amount
+    val format = NumberFormat.getCurrencyInstance(Locale("en", "KE"))
+    format.currency = Currency.getInstance(currency)
+    return format.format(numericAmount).replace(".00", "")
 }
 
 @Composable
@@ -77,210 +431,9 @@ fun LoadingIndicator() {
 fun ErrorMessage(message: String) {
     Box(modifier = Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
         Text(
-            text = "Error: $message",
+            text = message,
             color = Color.Red,
-            fontSize = 18.sp,
-            fontWeight = FontWeight.SemiBold
+            fontSize = 16.sp
         )
-    }
-}
-
-@Composable
-fun DashboardContent(summary: DashboardSummaryResponse) {
-    LazyColumn(
-        modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
-        contentPadding = PaddingValues(top = 16.dp, bottom = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        // 1. Welcome and Financial Summary Card
-        item {
-            val userName = summary.user.full_name.substringBefore(" ")
-            Text(
-                text = "Hello, $userName!",
-                fontSize = 28.sp,
-                fontWeight = FontWeight.ExtraBold,
-                color = Color(0xFF27272A)
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            FinancialSummaryCard(summary.financial_summary)
-        }
-
-        // 2. Outstanding Obligations Title
-        item {
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "Your Children's Status",
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF27272A)
-            )
-        }
-
-        // 3. Children List (Outstanding Balances)
-        items(summary.children) { child ->
-            ChildSummaryCard(child)
-        }
-
-        // 4. Recent Transactions Title
-        item {
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "Recent Transactions",
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF27272A)
-            )
-        }
-
-        // 5. Recent Transactions List
-        items(summary.recent_transactions.take(3)) { transaction ->
-            RecentTransactionItem(transaction)
-        }
-    }
-}
-
-// Utility function for formatting currency (assuming KES)
-fun formatCurrency(amount: Double, currency: String): String {
-    val numericAmount = if (amount.isNaN()) 0.0 else amount
-    val format = NumberFormat.getCurrencyInstance(Locale("en", "KE"))
-    format.currency = Currency.getInstance(currency)
-    return format.format(numericAmount)
-}
-
-@Composable
-fun FinancialSummaryCard(summary: FinancialSummary) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-    ) {
-        Column(modifier = Modifier.padding(20.dp)) {
-            Text("Total Outstanding Balance", fontSize = 16.sp, color = Color.Gray)
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = formatCurrency(summary.total_outstanding_balance, summary.currency),
-                fontSize = 32.sp,
-                fontWeight = FontWeight.ExtraBold,
-                color = Color(0xFFDC2626)
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Divider(color = Color(0xFFE5E7EB), thickness = 1.dp)
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-                Column {
-                    Text("Total Paid", fontSize = 14.sp, color = Color.Gray)
-                    Text(
-                        text = formatCurrency(summary.total_paid, summary.currency),
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Color(0xFF10B981)
-                    )
-                }
-
-                Button(onClick = { /* Navigate to Pay Screen */ },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3B82F6))) {
-                    Text("Pay Now")
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun ChildSummaryCard(child: ChildDetail) {
-    val balanceText = if (child.outstanding_balance > 0) {
-        "Balance: ${formatCurrency(child.outstanding_balance, "KES")}"
-    } else {
-        "Balance: Paid Up!"
-    }
-
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .background(Color(0xFFE5E7EB), RoundedCornerShape(50)),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(child.first_name.first().toString(), color = Color(0xFF3B82F6), fontSize = 20.sp, fontWeight = FontWeight.Bold)
-            }
-
-            Spacer(modifier = Modifier.width(16.dp))
-
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = "${child.first_name} ${child.last_name}",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
-                Text(
-                    text = "${child.student_class} | ${child.school_name}",
-                    fontSize = 14.sp,
-                    color = Color.Gray
-                )
-            }
-
-            Text(
-                text = balanceText,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                color = if (child.outstanding_balance > 0) Color(0xFFDC2626) else Color(0xFF10B981)
-            )
-        }
-    }
-}
-
-@Composable
-fun RecentTransactionItem(transaction: RecentTransaction) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Column {
-                Text(
-                    text = "${transaction.method} Payment",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium
-                )
-                Text(
-                    text = "Txn ID: ${transaction.txn_id}",
-                    fontSize = 12.sp,
-                    color = Color.Gray
-                )
-            }
-
-            Column(horizontalAlignment = Alignment.End) {
-                Text(
-                    text = formatCurrency(transaction.amount.toDoubleOrNull() ?: 0.0, "KES"),
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF10B981)
-                )
-                Text(
-                    text = transaction.created_at.substringBefore("T"),
-                    fontSize = 12.sp,
-                    color = Color.Gray
-                )
-            }
-        }
     }
 }

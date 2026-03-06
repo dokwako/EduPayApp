@@ -63,13 +63,17 @@ data class LoginRequest(
 
 @Serializable
 data class InitiatePaymentRequest(
-    val student_id: Int,
-    val amount: Double,
-    val phone_number: String
+   val obligation_id: Int,
+   val phone_number: String,
+   val amount: Int? =null
 )
 
 // --- Responses ---
-
+@Serializable
+data class InitiatePaymentResponse(
+    val payment_id: String,
+    val message: String? = null
+)
 @Serializable
 data class AuthMessageResponse(
     val message: String? = null,
@@ -95,12 +99,7 @@ data class UserMetadata(
     val full_name: String
 )
 
-@Serializable
-data class InitiatePaymentResponse(
-    val message: String,
-    val success: Boolean,
-    val checkout_request_id: String? = null
-)
+
 
 // --- Dashboard Models ---
 
