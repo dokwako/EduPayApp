@@ -11,11 +11,14 @@ import com.example.edupayapp.ui.dashboard.DashboardScreen
 import com.example.edupayapp.ui.forgotpin.ForgotPinScreen
 import com.example.edupayapp.ui.help.HelpScreen
 import com.example.edupayapp.ui.history.HistoryScreen
+import com.example.edupayapp.ui.history.ReceiptDetailScreen
+// FIX 1: Exact spelling of your receipt folder
 import com.example.edupayapp.ui.login.LoginScreen
 import com.example.edupayapp.ui.otp.OtpScreen
 import com.example.edupayapp.ui.payment.PaymentScreen
 import com.example.edupayapp.ui.pin.PinScreen
 import com.example.edupayapp.ui.profile.ProfileScreen
+// FIX 2: Exact spelling of your profile folder
 import com.example.edupayapp.ui.register.SignUpScreen
 import com.example.edupayapp.ui.welcome.WelcomeScreen
 
@@ -93,27 +96,22 @@ fun AppNavigation() {
             )
         }
 
-        // --- DASHBOARD AND MAIN APP FLOW ---
-
         composable("dashboard") {
             DashboardScreen(
-                onLoggedOut = {
-                    navController.navigate("welcome") { popUpTo(0) }
-                },
+                onLoggedOut = { navController.navigate("welcome") { popUpTo(0) } },
                 onNavigateToProfile = { navController.navigate("profile") },
                 onNavigateToHistory = { navController.navigate("history") },
                 onNavigateToReceipts = { navController.navigate("history") },
                 onNavigateToHelp = { navController.navigate("help") },
-                // Receiving 5 items from Dashboard (ID, Name, School, Amount, Status)
-                onChildClicked = { id, name, school, amount, status ->
+                onChildClicked = { id, name, school, amount, status, itemName ->
                     val safeId = android.net.Uri.encode(id)
                     val safeName = android.net.Uri.encode(name)
                     val safeSchool = android.net.Uri.encode(school)
                     val safeAmount = android.net.Uri.encode(amount)
                     val safeStatus = android.net.Uri.encode(status)
+                    val safeItemName = android.net.Uri.encode(itemName)
 
-                    // FIXED: Corrected the path and removed the extra quotation mark
-                    navController.navigate("payment/$safeId/$safeName/$safeSchool/$safeAmount/$safeStatus")
+                    navController.navigate("payment/$safeId/$safeName/$safeSchool/$safeAmount/$safeStatus/$safeItemName")
                 }
             )
         }
@@ -124,45 +122,77 @@ fun AppNavigation() {
                     val userEmailPlaceholder = "logged_in_user@edupay.com"
                     navController.navigate("create_pin/$userEmailPlaceholder")
                 },
-                onLogoutConfirmed = {
-                    navController.navigate("welcome") { popUpTo(0) }
-                },
+                onLogoutConfirmed = { navController.navigate("welcome") { popUpTo(0) } },
                 onNavigateBack = { navController.popBackStack() }
             )
         }
 
+        // --- UPDATED HISTORY ROUTE ---
+        // --- UPDATED HISTORY ROUTE ---
         composable("history") {
             HistoryScreen(
                 onNavigateBack = { navController.popBackStack() },
-                onViewReceiptClicked = { }
+                onViewReceiptClicked = { name, amt, item ->
+                    val encodedName = android.net.Uri.encode(name)
+                    val encodedAmt = android.net.Uri.encode(amt)
+                    val encodedItem = android.net.Uri.encode(item)
+                    navController.navigate("receipt_detail/$encodedName/$encodedAmt/$encodedItem")
+                }
             )
         }
 
-        // UPGRADED: Route now expects 5 arguments
+        // --- NEW RECEIPT DETAIL ROUTE (FIX 3: ADDED DECODE LOGIC)
         composable(
-            route = "payment/{studentId}/{studentName}/{schoolName}/{amount}/{status}",
+            route = "receipt_detail/{name}/{amount}/{item}",
+            arguments = listOf(
+                navArgument("name") { type = NavType.StringType },
+                navArgument("amount") { type = NavType.StringType },
+                navArgument("item") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val name = android.net.Uri.decode(backStackEntry.arguments?.getString("name") ?: "")
+            val amt = android.net.Uri.decode(backStackEntry.arguments?.getString("amount") ?: "")
+            val item = android.net.Uri.decode(backStackEntry.arguments?.getString("item") ?: "")
+
+            ReceiptDetailScreen(
+                studentName = name,
+                amount = amt,
+                itemName = item,
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = "payment/{studentId}/{studentName}/{schoolName}/{amount}/{status}/{itemName}",
             arguments = listOf(
                 navArgument("studentId") { type = NavType.StringType },
                 navArgument("studentName") { type = NavType.StringType },
                 navArgument("schoolName") { type = NavType.StringType },
                 navArgument("amount") { type = NavType.StringType },
-                navArgument("status") { type = NavType.StringType }
+                navArgument("status") { type = NavType.StringType },
+                navArgument("itemName") { type = NavType.StringType }
             )
         ) { backStackEntry ->
-            val studentId = android.net.Uri.decode(backStackEntry.arguments?.getString("studentId") ?: "")
-            val studentName = android.net.Uri.decode(backStackEntry.arguments?.getString("studentName") ?: "")
-            val schoolName = android.net.Uri.decode(backStackEntry.arguments?.getString("schoolName") ?: "")
-            val amount = android.net.Uri.decode(backStackEntry.arguments?.getString("amount") ?: "")
-            val status = android.net.Uri.decode(backStackEntry.arguments?.getString("status") ?: "")
+            val sId = android.net.Uri.decode(backStackEntry.arguments?.getString("studentId") ?: "")
+            val sName = android.net.Uri.decode(backStackEntry.arguments?.getString("studentName") ?: "")
+            val scName = android.net.Uri.decode(backStackEntry.arguments?.getString("schoolName") ?: "")
+            val amt = android.net.Uri.decode(backStackEntry.arguments?.getString("amount") ?: "")
+            val stat = android.net.Uri.decode(backStackEntry.arguments?.getString("status") ?: "")
+            val iName = android.net.Uri.decode(backStackEntry.arguments?.getString("itemName") ?: "")
 
             PaymentScreen(
-                studentId = studentId,
-                studentName = studentName,
-                schoolName = schoolName,
-                amount = amount,
-                status = status,
+                studentId = sId,
+                studentName = sName,
+                schoolName = scName,
+                amount = amt,
+                status = stat,
+                itemName = iName,
                 onNavigateBack = { navController.popBackStack() },
-                onViewReceipt = { }
+                onViewReceipt = { paymentId ->
+                    navController.navigate("history") {
+                        popUpTo("dashboard") { inclusive = false }
+                    }
+                }
             )
         }
 

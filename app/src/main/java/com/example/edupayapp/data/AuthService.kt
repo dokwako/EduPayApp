@@ -10,12 +10,14 @@ import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import java.io.IOException
 
 // --- FIX: REMOVED REDUNDANT IMPORTS ---
 // I removed the explicit imports for AuthMessageResponse, LoginRequest, etc.
-// Because this file is in 'package com.example.edupayapp.data', it automatically
+// Because this file is in 'package.data', it automatically
 // sees everything in AuthModels.kt. Importing them explicitly causes errors.
 // -----------------------------------------------------------
 
@@ -73,108 +75,121 @@ val httpClient = HttpClient(CIO) {
 class AuthService {
     // --- 1. Parent Registration ---
     suspend fun registerParent(request: ParentRegisterRequest): AuthMessageResponse {
-        return try {
-            // FIX: String concatenation prevents Ktor from erasing the /api/accounts/ path
-            val response = httpClient.post("${BASE_URL}parent/register/") { setBody(request) }
-            response.body<AuthMessageResponse>()
-        } catch (e: ClientRequestException) {
-            val errorBody = e.response.body<AuthMessageResponse>()
-            AuthMessageResponse(error = errorBody.error ?: e.response.status.description)
-        } catch (e: Exception) {
-            AuthMessageResponse(error = e.message ?: "Network error")
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = httpClient.post("${BASE_URL}parent/register/") { setBody(request) }
+                response.body<AuthMessageResponse>()
+            } catch (e: ClientRequestException) {
+                val errorBody = try { e.response.body<AuthMessageResponse>() } catch(se: Exception) { null }
+                AuthMessageResponse(error = errorBody?.error ?: e.response.status.description)
+            } catch (e: Exception) {
+                AuthMessageResponse(error = e.message ?: "Network error")
+            }
         }
     }
 
     // --- 2. Parent OTP Verification ---
     suspend fun verifyOtp(request: OtpVerificationRequest): AuthMessageResponse {
-        return try {
-            val response = httpClient.post("${BASE_URL}parent/verify-otp/") { setBody(request) }
-            response.body<AuthMessageResponse>()
-        } catch (e: ClientRequestException) {
-            val errorBody = e.response.body<AuthMessageResponse>()
-            AuthMessageResponse(error = errorBody.error ?: "Verification failed: Invalid OTP.")
-        } catch (e: Exception) {
-            AuthMessageResponse(error = e.message ?: "Network error")
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = httpClient.post("${BASE_URL}parent/verify-otp/") { setBody(request) }
+                response.body<AuthMessageResponse>()
+            } catch (e: ClientRequestException) {
+                val errorBody = try { e.response.body<AuthMessageResponse>() } catch(se: Exception) { null }
+                AuthMessageResponse(error = errorBody?.error ?: "Verification failed: Invalid OTP.")
+            } catch (e: Exception) {
+                AuthMessageResponse(error = e.message ?: "Network error")
+            }
         }
     }
 
     // --- 3. Parent PIN Setup ---
     suspend fun setParentPin(request: PinSetupRequest): AuthMessageResponse {
-        return try {
-            val response = httpClient.post("${BASE_URL}parent/set-pin/") { setBody(request) }
-            response.body<AuthMessageResponse>()
-        } catch (e: ClientRequestException) {
-            val errorBody = e.response.body<AuthMessageResponse>()
-            AuthMessageResponse(error = errorBody.error ?: "PIN setup failed.")
-        } catch (e: Exception) {
-            AuthMessageResponse(error = e.message ?: "Network error")
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = httpClient.post("${BASE_URL}parent/set-pin/") { setBody(request) }
+                response.body<AuthMessageResponse>()
+            } catch (e: ClientRequestException) {
+                val errorBody = try { e.response.body<AuthMessageResponse>() } catch(se: Exception) { null }
+                AuthMessageResponse(error = errorBody?.error ?: "PIN setup failed.")
+            } catch (e: Exception) {
+                AuthMessageResponse(error = e.message ?: "Network error")
+            }
         }
     }
 
     // --- 4. Login (Auth) ---
     suspend fun login(request: LoginRequest): LoginResponse {
-        return try {
-            val response = httpClient.post("${BASE_URL}login/") { setBody(request) }
-            val loginData = response.body<LoginResponse>()
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = httpClient.post("${BASE_URL}login/") { setBody(request) }
+                val loginData = response.body<LoginResponse>()
 
-            tokenStorage.saveToken(loginData.access_token, loginData.user.email, loginData.user.id)
+                tokenStorage.saveToken(loginData.access_token, loginData.user.email, loginData.user.id)
 
-            return loginData
-        } catch (e: ClientRequestException) {
-            if (e.response.status.value == 401) {
-                throw IllegalStateException("Invalid credentials.")
+                loginData
+            } catch (e: ClientRequestException) {
+                if (e.response.status.value == 401) {
+                    throw IllegalStateException("Invalid credentials.")
+                }
+                val errorBody = try { e.response.body<AuthMessageResponse>() } catch (se: Exception) { null }
+                throw IllegalStateException(errorBody?.error ?: e.response.status.description)
+            } catch (e: Exception) {
+                if (e.message?.contains("Not enough data available") == true || e.message?.contains("End of input") == true || e is IOException) {
+                    throw IllegalStateException("Login failed: Server returned incomplete data. Please notify the backend team.")
+                }
+                throw e
             }
-            val errorBody = try { e.response.body<AuthMessageResponse>() } catch (se: Exception) { null }
-            throw IllegalStateException(errorBody?.error ?: e.response.status.description)
-        } catch (e: Exception) {
-            if (e.message?.contains("Not enough data available") == true || e.message?.contains("End of input") == true || e is IOException) {
-                throw IllegalStateException("Login failed: Server returned incomplete data. Please notify the backend team.")
-            }
-            throw e
         }
     }
 
     // --- 5. Logout ---
     suspend fun logout(): AuthMessageResponse {
-        return try {
-            val response = httpClient.post("${BASE_URL}logout/")
-            tokenStorage.clear()
-            response.body<AuthMessageResponse>()
-        } catch (e: Exception) {
-            tokenStorage.clear()
-            AuthMessageResponse(error = e.message ?: "Logout failed.")
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = httpClient.post("${BASE_URL}logout/")
+                tokenStorage.clear()
+                response.body<AuthMessageResponse>()
+            } catch (e: Exception) {
+                tokenStorage.clear()
+                AuthMessageResponse(error = e.message ?: "Logout failed.")
+            }
         }
     }
 
     // --- 6. Dashboard Data Fetch ---
     suspend fun getDashboardSummary(parentId: String): DashboardSummaryResponse {
-        return try {
-            val response = httpClient.get("${BASE_URL}parent/dashboard/$parentId/")
-            return response.body<DashboardSummaryResponse>()
-        } catch (e: ClientRequestException) {
-            if (e.response.status.value == 401) {
-                throw IllegalStateException("Session expired. Please log in again.")
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = httpClient.get("${BASE_URL}parent/dashboard/$parentId/")
+                response.body<DashboardSummaryResponse>()
+            } catch (e: ClientRequestException) {
+                if (e.response.status.value == 401) {
+                    throw IllegalStateException("Session expired. Please log in again.")
+                }
+                val errorBody = try { e.response.body<AuthMessageResponse>() } catch (se: Exception) { null }
+                throw IllegalStateException(errorBody?.error ?: "Failed to fetch dashboard data.")
+            } catch (e: Exception) {
+                throw IllegalStateException("Network error: Could not connect to dashboard API.")
             }
-            val errorBody = try { e.response.body<AuthMessageResponse>() } catch (se: Exception) { null }
-            throw IllegalStateException(errorBody?.error ?: "Failed to fetch dashboard data.")
-        } catch (e: Exception) {
-            throw IllegalStateException("Network error: Could not connect to dashboard API.")
         }
     }
 
     // --- 7. Initiate Payment ---
     suspend fun initiatePayment(request: InitiatePaymentRequest): InitiatePaymentResponse {
-        return try {
-            // Note: Uses PAYMENTS_BASE_URL here instead of BASE_URL
-            val response = httpClient.post("${PAYMENTS_BASE_URL}initiate-payment/") {
-                setBody(request)
+        return withContext(Dispatchers.IO) {
+            try {
+                // Note: Uses PAYMENTS_BASE_URL here instead of BASE_URL
+                val response = httpClient.post("${PAYMENTS_BASE_URL}initiate-payment/") {
+                    setBody(request)
+                }
+                response.body<InitiatePaymentResponse>()
+            } catch (e: ClientRequestException) {
+                val errorBody = try { e.response.body<AuthMessageResponse>() } catch (se: Exception) { null }
+                throw IllegalStateException(errorBody?.error ?: "Payment initiation failed: Check phone number/obligation.")
+            } catch (e: Exception) {
+                throw IllegalStateException("Network error during payment initiation.")
             }
-            return response.body<InitiatePaymentResponse>()
-        } catch (e: ClientRequestException) {
-            val errorBody = try { e.response.body<AuthMessageResponse>() } catch (se: Exception) { null }
-            throw IllegalStateException(errorBody?.error ?: "Payment initiation failed: Check phone number/obligation.")
-        } catch (e: Exception) {
-            throw IllegalStateException("Network error during payment initiation.")
         }
     }
 }

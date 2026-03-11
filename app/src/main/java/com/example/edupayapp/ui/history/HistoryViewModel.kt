@@ -8,9 +8,13 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+// FIX: Added studentName, itemName, and amount so the receipt has data to show
 data class NotificationItem(
     val id: String,
-    val type: String, // "Payment Reminder" or "Payment Received"
+    val type: String,
+    val studentName: String,
+    val itemName: String,
+    val amount: String,
     val message: String,
     val date: String,
     val hasReceipt: Boolean = false
@@ -39,39 +43,48 @@ class HistoryViewModel : ViewModel() {
 
             val dummyData = listOf(
                 NotificationItem(
-                    id = "1",
-                    type = "Payment Reminder",
-                    message = "Trip payment for Mary Kerubo is due in 3 days",
-                    date = "Tue 10:30AM",
-                    hasReceipt = true // Figma shows "View receipt" on reminders too
+                    id = "0",
+                    type = "Payment Received",
+                    studentName = "Faith Kimani",
+                    itemName = "School Fees",
+                    amount = "1",
+                    message = "Your payment for Faith Kimani's School Fees has been received.",
+                    date = "Just Now",
+                    hasReceipt = true
                 ),
                 NotificationItem(
                     id = "2",
                     type = "Payment Received",
-                    message = "Your payment of KES.6,700 for Andrew Ochieng's uniform has been recieved.",
+                    studentName = "Andrew Ochieng",
+                    itemName = "Uniform",
+                    amount = "6700",
+                    message = "Your payment of KES.6,700 for Andrew Ochieng's uniform has been received.",
                     date = "Mon 17:23PM",
                     hasReceipt = true
                 ),
                 NotificationItem(
-                    id = "3",
+                    id = "1",
                     type = "Payment Reminder",
+                    studentName = "Mary Kerubo",
+                    itemName = "Trip",
+                    amount = "2500",
                     message = "Trip payment for Mary Kerubo is due in 3 days",
-                    date = "Sun 10:30AM",
+                    date = "Tue 10:30AM",
                     hasReceipt = true
                 ),
                 NotificationItem(
                     id = "4",
                     type = "Payment Reminder",
-                    message = "Ann Mwende's school fees balance of KES. 1700 is due nex week on Wednesday 25/08/2025.",
+                    studentName = "Ann Mwende",
+                    itemName = "School Fees",
+                    amount = "1700",
+                    message = "Ann Mwende's school fees balance of KES. 1700 is due next week.",
                     date = "18/08/2025",
                     hasReceipt = true
                 )
             )
 
             _uiState.update { it.copy(isLoading = false, notifications = dummyData) }
-
-            // To test the error screen , uncomment
-            // _uiState.update { it.copy(isLoading = false, error = "Failed to load") }
         }
     }
 

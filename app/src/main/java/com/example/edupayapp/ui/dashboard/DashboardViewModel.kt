@@ -19,18 +19,16 @@ data class DashboardUiState(
 class DashboardViewModel : ViewModel() {
     private val _uiState = MutableStateFlow(DashboardUiState())
     val uiState: StateFlow<DashboardUiState> = _uiState
-
     private val authService = AuthService()
 
     init {
         fetchDashboardData()
     }
 
-    private fun fetchDashboardData() {
+    fun fetchDashboardData() {
         val parentId = tokenStorage.getUserId()
-
         if (parentId.isNullOrBlank()) {
-            _uiState.update { it.copy(isLoading = false, error = "User ID missing. Please log in.") }
+            _uiState.update { it.copy(isLoading = false, error = "Login session expired.") }
             return
         }
 
@@ -39,17 +37,9 @@ class DashboardViewModel : ViewModel() {
             try {
                 val data = authService.getDashboardSummary(parentId)
                 _uiState.update { it.copy(isLoading = false, summary = data) }
-            } catch (e: IllegalStateException) {
-                _uiState.update { it.copy(isLoading = false, error = e.message ?: "Failed to load dashboard.") }
             } catch (e: Exception) {
-                _uiState.update { it.copy(isLoading = false, error = "Network Error: Could not connect to API.") }
+                _uiState.update { it.copy(isLoading = false, error = "Could not fetch dashboard data.") }
             }
-        }
-    }
-
-    fun logout() {
-        viewModelScope.launch {
-            authService.logout()
         }
     }
 }
