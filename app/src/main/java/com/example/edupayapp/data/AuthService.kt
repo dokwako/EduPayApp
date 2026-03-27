@@ -15,19 +15,13 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import java.io.IOException
 
-// --- FIX: REMOVED REDUNDANT IMPORTS ---
-// I removed the explicit imports for AuthMessageResponse, LoginRequest, etc.
-// Because this file is in 'package.data', it automatically
-// sees everything in AuthModels.kt. Importing them explicitly causes errors.
-// -----------------------------------------------------------
+// --- NEW PERMANENT RAILWAY URLs ---
+const val BASE_URL = "https://edupay-backend-production-32f1.up.railway.app/api/accounts/"
+const val PAYMENTS_BASE_URL = "https://edupay-backend-production-32f1.up.railway.app/api/payments/"
+const val NOTIFICATIONS_BASE_URL = "https://edupay-backend-production-32f1.up.railway.app/api/notifications/"
 
-const val BASE_URL = "https://edupay-backend-pj75.onrender.com/api/accounts/"
-const val PAYMENTS_BASE_URL = "https://edupay-backend-pj75.onrender.com/api/payments/"
-
-// NOTE: tokenStorage and InMemoryTokenStorage are assumed to be defined in AuthModels.kt
 val tokenStorage: TokenStorage = InMemoryTokenStorage()
 
-// Global Ktor HttpClient Setup
 val httpClient = HttpClient(CIO) {
     install(HttpTimeout) {
         requestTimeoutMillis = 60000
@@ -135,10 +129,11 @@ class AuthService {
                 val errorBody = try { e.response.body<AuthMessageResponse>() } catch (se: Exception) { null }
                 throw IllegalStateException(errorBody?.error ?: e.response.status.description)
             } catch (e: Exception) {
-                if (e.message?.contains("Not enough data available") == true || e.message?.contains("End of input") == true || e is IOException) {
-                    throw IllegalStateException("Login failed: Server returned incomplete data. Please notify the backend team.")
+                // Slightly tweaked to catch raw HTML errors more cleanly just in case Railway reboots
+                if (e.message?.contains("<!DOCTYPE html>") == true || e.message?.contains("Not enough data") == true) {
+                    throw IllegalStateException("Server is currently offline or rebooting. Please try again.")
                 }
-                throw e
+                throw IllegalStateException(e.message ?: "Login failed. Please check your connection.")
             }
         }
     }
@@ -179,16 +174,81 @@ class AuthService {
     suspend fun initiatePayment(request: InitiatePaymentRequest): InitiatePaymentResponse {
         return withContext(Dispatchers.IO) {
             try {
-                // Note: Uses PAYMENTS_BASE_URL here instead of BASE_URL
                 val response = httpClient.post("${PAYMENTS_BASE_URL}initiate-payment/") {
                     setBody(request)
                 }
                 response.body<InitiatePaymentResponse>()
             } catch (e: ClientRequestException) {
                 val errorBody = try { e.response.body<AuthMessageResponse>() } catch (se: Exception) { null }
-                throw IllegalStateException(errorBody?.error ?: "Payment initiation failed: Check phone number/obligation.")
+                throw IllegalStateException(errorBody?.error ?: "Payment initiation failed.")
             } catch (e: Exception) {
                 throw IllegalStateException("Network error during payment initiation.")
+            }
+        }
+    }
+
+    // --- 8. Notification Unread Count ---
+    suspend fun getUnreadNotificationCount(): UnreadNotificationCountDto {
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = httpClient.get("${NOTIFICATIONS_BASE_URL}unread-count/")
+                response.body<UnreadNotificationCountDto>()
+            } catch (e: Exception) {
+                UnreadNotificationCountDto(unread_count = 0)
+            }
+        }
+    }
+
+    // --- 9. Paginated Payment History ---
+    suspend fun getPaymentHistory(parentId: String, page: Int, statusFilter: String): PaginatedHistoryResponse {
+        return withContext(Dispatchers.IO) {
+            val url = "${PAYMENTS_BASE_URL}parents/payments/$parentId/?page=$page" +
+                    if (statusFilter.isNotBlank()) "&status=$statusFilter" else ""
+
+            httpClient.get(url).body<PaginatedHistoryResponse>()
+        }
+    }
+
+    // --- 10. Receipt Download ---
+    suspend fun downloadReceiptBytes(paymentId: String): ByteArray {
+        return withContext(Dispatchers.IO) {
+            httpClient.get("${PAYMENTS_BASE_URL}reports/receipts/download/$paymentId/").body<ByteArray>()
+        }
+    }
+
+    // --- 11. Get Notifications List ---
+    suspend fun getNotifications(page: Int = 1): PaginatedNotificationsResponse {
+        return withContext(Dispatchers.IO) {
+            httpClient.get("${NOTIFICATIONS_BASE_URL}?page=$page&page_size=20").body<PaginatedNotificationsResponse>()
+        }
+    }
+
+    // --- 12. Mark Notification as Read ---
+    suspend fun markNotificationAsRead(notificationId: Int) {
+        withContext(Dispatchers.IO) {
+            httpClient.patch("${NOTIFICATIONS_BASE_URL}$notificationId/read/")
+        }
+    }
+    // --- 13. Check Specific Payment Status ---
+    suspend fun checkPaymentStatus(paymentId: String): PaymentStatusResponse {
+        return withContext(Dispatchers.IO) {
+            httpClient.get("${PAYMENTS_BASE_URL}status/$paymentId/").body<PaymentStatusResponse>()
+        }
+    }
+
+    // --- 14. Update FCM Token ---
+    suspend fun updateFcmToken(token: String) {
+        withContext(Dispatchers.IO) {
+            try {
+                // We only try to update the token if the user is actually logged in
+                if (tokenStorage.getToken() != null) {
+                    httpClient.post("${BASE_URL}parent/update-fcm-token/") {
+                        setBody(UpdateFcmTokenRequest(token))
+                    }
+                }
+            } catch (e: Exception) {
+                // Background network failures here shouldn't crash the app
+                println("Failed to update FCM token: ${e.message}")
             }
         }
     }
