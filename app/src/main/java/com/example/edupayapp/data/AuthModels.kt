@@ -4,11 +4,10 @@ import kotlinx.serialization.Serializable
 
 // --- Storage Interface ---
 interface TokenStorage {
-    // FIX: Added userId to storage
     fun saveToken(token: String, email: String, userId: String)
     fun getToken(): String?
     fun getEmail(): String?
-    fun getUserId(): String? // Getter for the critical Parent ID
+    fun getUserId(): String?
     fun clear()
 }
 
@@ -16,7 +15,7 @@ interface TokenStorage {
 class InMemoryTokenStorage : TokenStorage {
     private var accessToken: String? = null
     private var userEmail: String? = null
-    private var userId: String? = null // Store the UUID
+    private var userId: String? = null
 
     override fun saveToken(token: String, email: String, userId: String) {
         accessToken = token
@@ -26,7 +25,7 @@ class InMemoryTokenStorage : TokenStorage {
 
     override fun getToken(): String? = accessToken
     override fun getEmail(): String? = userEmail
-    override fun getUserId(): String? = userId // Return the stored UUID
+    override fun getUserId(): String? = userId
 
     override fun clear() {
         accessToken = null
@@ -63,9 +62,9 @@ data class LoginRequest(
 
 @Serializable
 data class InitiatePaymentRequest(
-   val obligation_id: Int,
-   val phone_number: String,
-   val amount: Int? =null
+    val obligation_id: Int,
+    val phone_number: String,
+    val amount: String? = null
 )
 
 // --- Responses ---
@@ -74,6 +73,7 @@ data class InitiatePaymentResponse(
     val payment_id: String,
     val message: String? = null
 )
+
 @Serializable
 data class AuthMessageResponse(
     val message: String? = null,
@@ -88,7 +88,7 @@ data class LoginResponse(
 
 @Serializable
 data class UserData(
-    val id: String, // Critical: This is the parent_id needed for the dashboard URL
+    val id: String,
     val email: String,
     val user_metadata: UserMetadata
 )
@@ -99,10 +99,7 @@ data class UserMetadata(
     val full_name: String
 )
 
-
-
 // --- Dashboard Models ---
-
 @Serializable
 data class DashboardSummaryResponse(
     val user: DashboardUser,
@@ -155,4 +152,55 @@ data class RecentTransaction(
     val status: String,
     val txn_id: String,
     val created_at: String
+)
+
+// --- Notification Models ---
+@Serializable
+data class UnreadNotificationCountDto(
+    val unread_count: Int
+)
+
+// --- History & Pagination Models ---
+@Serializable
+data class PaginatedHistoryResponse(
+    val count: Int,
+    val next: String?,
+    val previous: String?,
+    val results: List<PaymentHistoryItem>
+)
+
+@Serializable
+data class PaymentHistoryItem(
+    val id: String,
+    val amount: String,
+    val status: String,
+    val created_at: String,
+    val item_name: String? = "Obligation",
+    val student_name: String? = "Student"
+)
+@Serializable
+data class PaginatedNotificationsResponse(
+    val count: Int,
+    val next: String?,
+    val previous: String?,
+    val results: List<NotificationItemDto>
+)
+
+@Serializable
+data class NotificationItemDto(
+    val id: Int,
+    val notification_type: String,
+    val title: String,
+    val message: String,
+    val is_read: Boolean,
+    val created_at: String
+)
+@Serializable
+data class PaymentStatusResponse(
+    val status: String
+)
+
+@Serializable
+data class UpdateFcmTokenRequest(
+    val fcm_token: String
 )
