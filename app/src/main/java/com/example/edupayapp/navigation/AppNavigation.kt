@@ -1,30 +1,41 @@
 package com.example.edupayapp.navigation
 
+import android.widget.Toast // ADDED for download alerts
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope // ADDED to launch network calls
+import androidx.compose.ui.platform.LocalContext // ADDED for Toasts
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import kotlinx.coroutines.launch // ADDED for background work
+
+import com.example.edupayapp.data.AuthService // ADDED to fetch the receipt
+
 import com.example.edupayapp.ui.createpin.CreatePinScreen
 import com.example.edupayapp.ui.dashboard.DashboardScreen
 import com.example.edupayapp.ui.forgotpin.ForgotPinScreen
 import com.example.edupayapp.ui.help.HelpScreen
 import com.example.edupayapp.ui.history.HistoryScreen
-import com.example.edupayapp.ui.history.ReceiptDetailScreen
-// FIX 1: Exact spelling of your receipt folder
+import com.example.edupayapp.ui.reciept.ReceiptDetailScreen
 import com.example.edupayapp.ui.login.LoginScreen
 import com.example.edupayapp.ui.otp.OtpScreen
 import com.example.edupayapp.ui.payment.PaymentScreen
 import com.example.edupayapp.ui.pin.PinScreen
 import com.example.edupayapp.ui.profile.ProfileScreen
-// FIX 2: Exact spelling of your profile folder
 import com.example.edupayapp.ui.register.SignUpScreen
 import com.example.edupayapp.ui.welcome.WelcomeScreen
+import com.example.edupayapp.ui.notifications.NotificationScreen
+import com.example.edupayapp.ui.shared.SharedEduPayViewModel
 
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
+
+    // We keep this here for your PaymentScreen until we upgrade it later
+    val sharedViewModel: SharedEduPayViewModel = viewModel()
 
     NavHost(
         navController = navController,
@@ -103,6 +114,7 @@ fun AppNavigation() {
                 onNavigateToHistory = { navController.navigate("history") },
                 onNavigateToReceipts = { navController.navigate("history") },
                 onNavigateToHelp = { navController.navigate("help") },
+                onNavigateToNotifications = { navController.navigate("notifications") },
                 onChildClicked = { id, name, school, amount, status, itemName ->
                     val safeId = android.net.Uri.encode(id)
                     val safeName = android.net.Uri.encode(name)
@@ -113,6 +125,12 @@ fun AppNavigation() {
 
                     navController.navigate("payment/$safeId/$safeName/$safeSchool/$safeAmount/$safeStatus/$safeItemName")
                 }
+            )
+        }
+
+        composable("notifications") {
+            NotificationScreen(
+                onNavigateBack = { navController.popBackStack() }
             )
         }
 
@@ -127,21 +145,35 @@ fun AppNavigation() {
             )
         }
 
-        // --- UPDATED HISTORY ROUTE ---
-        // --- UPDATED HISTORY ROUTE ---
+        // --- UPDATED: History Screen ---
         composable("history") {
+            val scope = rememberCoroutineScope()
+            val context = LocalContext.current
+
             HistoryScreen(
                 onNavigateBack = { navController.popBackStack() },
-                onViewReceiptClicked = { name, amt, item ->
-                    val encodedName = android.net.Uri.encode(name)
-                    val encodedAmt = android.net.Uri.encode(amt)
-                    val encodedItem = android.net.Uri.encode(item)
-                    navController.navigate("receipt_detail/$encodedName/$encodedAmt/$encodedItem")
+                // 1. We now expect a single paymentId instead of the dummy strings
+                onViewReceiptClicked = { paymentId ->
+                    // 2. Launch the background task to hit the Ktor endpoint
+                    scope.launch {
+                        try {
+                            val authService = AuthService()
+                            val pdfBytes = authService.downloadReceiptBytes(paymentId)
+
+                            // Success! The bytes are ready to be saved to the phone.
+                            Toast.makeText(context, "Receipt Downloaded: ${pdfBytes.size} bytes", Toast.LENGTH_SHORT).show()
+
+                            // Note: Later, we can add the Android File I/O code here to actually
+                            // save these bytes into a .pdf file in the user's Downloads folder.
+                        } catch (e: Exception) {
+                            Toast.makeText(context, "Failed to download receipt.", Toast.LENGTH_SHORT).show()
+                        }
+                    }
                 }
             )
         }
 
-        // --- NEW RECEIPT DETAIL ROUTE (FIX 3: ADDED DECODE LOGIC)
+        // We leave this here just in case you still need the dummy receipt screen somewhere else
         composable(
             route = "receipt_detail/{name}/{amount}/{item}",
             arguments = listOf(
@@ -181,6 +213,7 @@ fun AppNavigation() {
             val iName = android.net.Uri.decode(backStackEntry.arguments?.getString("itemName") ?: "")
 
             PaymentScreen(
+                sharedViewModel = sharedViewModel,
                 studentId = sId,
                 studentName = sName,
                 schoolName = scName,
