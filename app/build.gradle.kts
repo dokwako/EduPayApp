@@ -2,8 +2,9 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-    // You correctly added the serialization plugin
+    //serialisation plugin
     kotlin("plugin.serialization") version "2.0.21"
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -96,8 +97,16 @@ dependencies {
     implementation("io.ktor:ktor-client-cio:${ktor_version}")
     implementation("io.ktor:ktor-client-auth:${ktor_version}")
 
+    // Paging 3 Integration
+    implementation("androidx.paging:paging-runtime-ktx:3.2.1")
+    implementation("androidx.paging:paging-compose:3.2.1")
 
-    // --- END OF NEW DEPENDENCIES ---
+    // Import the Firebase BoM
+    implementation(platform("com.google.firebase:firebase-bom:34.11.0"))
+    // Firebase Cloud Messaging
+    implementation(platform("com.google.firebase:firebase-bom:33.9.0")) // Using the latest BoM
+    implementation("com.google.firebase:firebase-messaging")
+
     // Coroutine support
     implementation(libs.kotlinx.coroutines.android)
     // +++ ADD THE NEW PLAN (Retrofit and Gson) +++
