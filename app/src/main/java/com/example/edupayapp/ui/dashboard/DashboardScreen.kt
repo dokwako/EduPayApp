@@ -2,7 +2,6 @@ package com.example.edupayapp.ui.dashboard
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -18,7 +17,6 @@ import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.PersonOutline
 import androidx.compose.material.icons.outlined.ReceiptLong
 import androidx.compose.material.icons.outlined.Schedule
-import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -36,7 +34,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.edupayapp.data.ChildDetail
 import com.example.edupayapp.data.DashboardSummaryResponse
 import com.example.edupayapp.data.FinancialSummary
-import java.text.NumberFormat
 import java.util.*
 
 @Composable
@@ -47,12 +44,19 @@ fun DashboardScreen(
     onNavigateToHistory: () -> Unit,
     onNavigateToReceipts: () -> Unit,
     onNavigateToHelp: () -> Unit,
+    onNavigateToNotifications: () -> Unit,
     onChildClicked: (String, String, String, String, String, String) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
     Scaffold(
-        topBar = { DashboardTopBar() },
+        topBar = {
+            DashboardTopBar(
+                // This connects the UI to the ViewModel's state
+                unreadCount = uiState.unreadNotificationCount,
+                onNavigateToNotifications = onNavigateToNotifications
+            )
+        },
         bottomBar = {
             DashboardBottomNavigation(
                 onNavigateToHistory = onNavigateToHistory,
@@ -103,13 +107,8 @@ fun DashboardContent(
             ChildSummaryCard(
                 child = child,
                 onChildClicked = {
-                    // AUTO-FETCH & CONTEXT LOGIC
                     val fullName = "${child.first_name} ${child.last_name}"
-
-                    // If balance is low, it's likely a Trip payment (Figma style)
                     val autoItemName = if (child.outstanding_balance < 5000 && child.outstanding_balance > 0) "Trip" else "School Fees"
-
-                    //  string amount for the editable field
                     val rawAmount = child.outstanding_balance.toInt().toString()
 
                     val statusText = when {
@@ -193,13 +192,43 @@ fun ChildSummaryCard(child: ChildDetail, onChildClicked: () -> Unit) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DashboardTopBar() {
-    TopAppBar(title = {
-        Text(buildAnnotatedString {
-            withStyle(SpanStyle(Color(0xFF10B981), fontWeight = FontWeight.ExtraBold)) { append("Edu") }
-            withStyle(SpanStyle(Color(0xFF3B82F6), fontWeight = FontWeight.ExtraBold)) { append("Pay") }
-        })
-    })
+fun DashboardTopBar(
+    unreadCount: Int, // The dynamic count injected from the Scaffold
+    onNavigateToNotifications: () -> Unit
+) {
+    TopAppBar(
+        title = {
+            Text(buildAnnotatedString {
+                withStyle(SpanStyle(Color(0xFF10B981), fontWeight = FontWeight.ExtraBold)) { append("Edu") }
+                withStyle(SpanStyle(Color(0xFF3B82F6), fontWeight = FontWeight.ExtraBold)) { append("Pay") }
+            })
+        },
+        actions = {
+            IconButton(onClick = onNavigateToNotifications) {
+                BadgedBox(
+                    badge = {
+                        // Only draw the red dot if there are actually unread notifications
+                        if (unreadCount > 0) {
+                            Badge(
+                                containerColor = Color.Red,
+                                contentColor = Color.White,
+                                modifier = Modifier.offset(x = (-4).dp, y = 4.dp)
+                            ) {
+                                Text("$unreadCount", fontSize = 10.sp)
+                            }
+                        }
+                    }
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Notifications,
+                        contentDescription = "Notifications",
+                        tint = Color(0xFF111827)
+                    )
+                }
+            }
+        },
+        colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFFF9FAFB))
+    )
 }
 
 @Composable
