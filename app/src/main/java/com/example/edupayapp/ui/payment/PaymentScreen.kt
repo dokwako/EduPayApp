@@ -15,13 +15,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 
+import com.example.edupayapp.ui.shared.SharedEduPayViewModel
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PaymentScreen(
+    sharedViewModel: SharedEduPayViewModel,
     studentId: String,
     studentName: String,
     schoolName: String,
@@ -34,7 +38,6 @@ fun PaymentScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    // AUTO-FETCH: Populate the screen state immediately upon arrival
     LaunchedEffect(studentId) {
         viewModel.initPaymentData(studentId, studentName, schoolName, amount, status, itemName)
     }
@@ -52,12 +55,16 @@ fun PaymentScreen(
                 )
             }
         },
-        containerColor = Color(0xFFF9FAFB) // Figma background
+        containerColor = Color(0xFFF9FAFB)
     ) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding)) {
             when (uiState.paymentState) {
                 PaymentState.INPUT -> PaymentInputContent(uiState, viewModel)
-                PaymentState.LOADING -> PaymentLoadingContent()
+
+                // Show different messages depending on the loop stage
+                PaymentState.LOADING -> PaymentLoadingContent("Connecting to Safaricom...")
+                PaymentState.WAITING_FOR_MPESA -> PaymentLoadingContent("Please enter your PIN on your phone...\nWaiting for confirmation.")
+
                 PaymentState.SUCCESS -> PaymentSuccessContent(uiState.paymentId ?: "", onViewReceipt)
                 PaymentState.ERROR -> PaymentErrorContent { viewModel.resetPayment() }
             }
@@ -69,7 +76,6 @@ fun PaymentScreen(
 fun PaymentInputContent(uiState: PaymentUiState, viewModel: PaymentViewModel) {
     Column(modifier = Modifier.fillMaxSize().padding(24.dp)) {
 
-        // --- FIGMA AUTO-FETCHED SUMMARY CARD ---
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),
@@ -94,13 +100,11 @@ fun PaymentInputContent(uiState: PaymentUiState, viewModel: PaymentViewModel) {
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        // --- CUSTOM INPUT FIELDS ---
         Text("M-Pesa details", fontWeight = FontWeight.Bold, fontSize = 16.sp)
         Text("Enter your M-pesa Details", fontSize = 12.sp, color = Color.Gray)
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 1. Where you enter any amount you want
         Text("Enter Amount to Pay", fontSize = 14.sp, fontWeight = FontWeight.Medium)
         OutlinedTextField(
             value = uiState.customAmount,
@@ -112,7 +116,6 @@ fun PaymentInputContent(uiState: PaymentUiState, viewModel: PaymentViewModel) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 2. M-Pesa Number
         Text("Enter your M-Pesa number", fontSize = 14.sp, fontWeight = FontWeight.Medium)
         OutlinedTextField(
             value = uiState.phoneNumber,
@@ -145,8 +148,15 @@ fun FigmaRow(label: String, value: String, valueColor: Color = Color.Black, isBo
     }
 }
 
+// UPDATED TO ACCEPT MESSAGES
 @Composable
-fun PaymentLoadingContent() { Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() } }
+fun PaymentLoadingContent(message: String) {
+    Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+        CircularProgressIndicator(color = Color(0xFF3B82F6))
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(message, color = Color.Gray, textAlign = TextAlign.Center, modifier = Modifier.padding(horizontal = 32.dp))
+    }
+}
 
 @Composable
 fun PaymentSuccessContent(id: String, onReceipt: (String) -> Unit) {
@@ -154,7 +164,7 @@ fun PaymentSuccessContent(id: String, onReceipt: (String) -> Unit) {
         Icon(Icons.Filled.Check, null, tint = Color(0xFF3B82F6), modifier = Modifier.size(80.dp))
         Text("Payment Made successfully!", fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(24.dp))
-        Button(onClick = { onReceipt(id) }) { Text("View Receipt") }
+        Button(onClick = { onReceipt(id) }, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3B82F6))) { Text("View Receipt") }
     }
 }
 
@@ -162,7 +172,8 @@ fun PaymentSuccessContent(id: String, onReceipt: (String) -> Unit) {
 fun PaymentErrorContent(onRetry: () -> Unit) {
     Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
         Icon(Icons.Outlined.WarningAmber, null, tint = Color.Red, modifier = Modifier.size(60.dp))
-        Text("Payment Failed")
+        Text("Payment Failed or Cancelled", fontWeight = FontWeight.Bold)
+        Spacer(Modifier.height(16.dp))
         Button(onClick = onRetry) { Text("Retry") }
     }
 }
