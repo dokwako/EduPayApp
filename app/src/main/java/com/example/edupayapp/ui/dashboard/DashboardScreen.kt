@@ -108,7 +108,19 @@ fun DashboardContent(
                 child = child,
                 onChildClicked = {
                     val fullName = "${child.first_name} ${child.last_name}"
-                    val autoItemName = if (child.outstanding_balance < 5000 && child.outstanding_balance > 0) "Trip" else "School Fees"
+
+                    // --- NEW CODE: Find the real obligation for this child ---
+                    // We look through the upcoming_obligations list to find the one matching this child
+                    val realObligation = summary.upcoming_obligations.firstOrNull {
+                        it.student_name.contains(child.first_name, ignoreCase = true)
+                    }
+
+                    // Grab the real obligation ID (like 1206), or default to "0" if missing
+                    val obligationIdToPay = realObligation?.id?.toString() ?: "0"
+
+                    // Grab the real item name (like "Lab Fee"), or use your fallback
+                    val actualItemName = realObligation?.description ?: if (child.outstanding_balance < 5000 && child.outstanding_balance > 0) "Trip" else "School Fees"
+
                     val rawAmount = child.outstanding_balance.toInt().toString()
 
                     val statusText = when {
@@ -118,12 +130,12 @@ fun DashboardContent(
                     }
 
                     onChildClicked(
-                        android.net.Uri.encode(child.student_id.toString()),
+                        android.net.Uri.encode(obligationIdToPay), // NOW PASSES THE OBLIGATION ID!
                         android.net.Uri.encode(fullName),
                         android.net.Uri.encode(child.school_name),
                         android.net.Uri.encode(rawAmount),
                         android.net.Uri.encode(statusText),
-                        android.net.Uri.encode(autoItemName)
+                        android.net.Uri.encode(actualItemName) // NOW PASSES THE REAL FEE NAME!
                     )
                 }
             )
