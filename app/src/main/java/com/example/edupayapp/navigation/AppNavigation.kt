@@ -123,6 +123,7 @@ fun AppNavigation() {
                     val safeStatus = android.net.Uri.encode(status)
                     val safeItemName = android.net.Uri.encode(itemName)
 
+                    // CHANGED THIS LINE
                     navController.navigate("payment/$safeId/$safeName/$safeSchool/$safeAmount/$safeStatus/$safeItemName")
                 }
             )
@@ -194,10 +195,11 @@ fun AppNavigation() {
             )
         }
 
+        // CHANGED THIS WHOLE BLOCK
         composable(
-            route = "payment/{studentId}/{studentName}/{schoolName}/{amount}/{status}/{itemName}",
+            route = "payment/{obligationId}/{studentName}/{schoolName}/{amount}/{status}/{itemName}",
             arguments = listOf(
-                navArgument("studentId") { type = NavType.StringType },
+                navArgument("obligationId") { type = NavType.StringType },
                 navArgument("studentName") { type = NavType.StringType },
                 navArgument("schoolName") { type = NavType.StringType },
                 navArgument("amount") { type = NavType.StringType },
@@ -205,7 +207,7 @@ fun AppNavigation() {
                 navArgument("itemName") { type = NavType.StringType }
             )
         ) { backStackEntry ->
-            val sId = android.net.Uri.decode(backStackEntry.arguments?.getString("studentId") ?: "")
+            val oId = android.net.Uri.decode(backStackEntry.arguments?.getString("obligationId") ?: "")
             val sName = android.net.Uri.decode(backStackEntry.arguments?.getString("studentName") ?: "")
             val scName = android.net.Uri.decode(backStackEntry.arguments?.getString("schoolName") ?: "")
             val amt = android.net.Uri.decode(backStackEntry.arguments?.getString("amount") ?: "")
@@ -214,7 +216,7 @@ fun AppNavigation() {
 
             PaymentScreen(
                 sharedViewModel = sharedViewModel,
-                studentId = sId,
+                obligationId = oId, // NOW PASSES oId
                 studentName = sName,
                 schoolName = scName,
                 amount = amt,
