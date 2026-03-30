@@ -61,6 +61,8 @@ val httpClient = HttpClient(CIO) {
 
     defaultRequest {
         header(HttpHeaders.ContentType, ContentType.Application.Json)
+
+        header("X-User-Timezone", java.util.TimeZone.getDefault().id)
     }
 
     expectSuccess = true
@@ -229,6 +231,7 @@ class AuthService {
             httpClient.patch("${NOTIFICATIONS_BASE_URL}$notificationId/read/")
         }
     }
+
     // --- 13. Check Specific Payment Status ---
     suspend fun checkPaymentStatus(paymentId: String): PaymentStatusResponse {
         return withContext(Dispatchers.IO) {
