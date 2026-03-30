@@ -64,7 +64,7 @@ class PaymentViewModel : ViewModel() {
                 // 2. TRIGGER STK PUSH
                 val response = authService.initiatePayment(
                     InitiatePaymentRequest(
-                        obligation_id = _uiState.value.studentId.toIntOrNull() ?: 0,
+                        obligation_id = _uiState.value.studentId.toIntOrNull() ?:0,
                         phone_number = mpesaNum,
                         amount = amountToPay
                     )
