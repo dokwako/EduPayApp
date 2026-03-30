@@ -26,7 +26,7 @@ import com.example.edupayapp.ui.shared.SharedEduPayViewModel
 @Composable
 fun PaymentScreen(
     sharedViewModel: SharedEduPayViewModel,
-    studentId: String,
+    obligationId: String, // CHANGED THIS FROM studentId
     studentName: String,
     schoolName: String,
     amount: String,
@@ -38,8 +38,8 @@ fun PaymentScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    LaunchedEffect(studentId) {
-        viewModel.initPaymentData(studentId, studentName, schoolName, amount, status, itemName)
+    LaunchedEffect(obligationId) { // CHANGED THIS FROM studentId
+        viewModel.initPaymentData(obligationId, studentName, schoolName, amount, status, itemName) // CHANGED THIS FROM studentId
     }
 
     Scaffold(
