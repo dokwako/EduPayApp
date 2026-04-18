@@ -2,7 +2,7 @@ package com.example.edupayapp.data
 
 import kotlinx.serialization.Serializable
 
-// --- Storage Interface ---
+// -Storage Interface ---
 interface TokenStorage {
     fun saveToken(token: String, email: String, userId: String)
     fun getToken(): String?
