@@ -1,308 +1,281 @@
 package com.example.edupayapp.ui.dashboard
 
-import androidx.compose.foundation.Image
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.HelpOutline
-import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.outlined.HelpOutline
+import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.material.icons.outlined.PersonOutline
+import androidx.compose.material.icons.outlined.ReceiptLong
+import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.edupayapp.R
+import com.example.edupayapp.data.ChildDetail
+import com.example.edupayapp.data.DashboardSummaryResponse
+import com.example.edupayapp.data.FinancialSummary
+import java.util.*
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
     viewModel: DashboardViewModel = viewModel(),
-    // --- FIX 2: Add all required navigation callbacks ---
-    onNavigateToHistory: () -> Unit,
+    onLoggedOut: () -> Unit,
     onNavigateToProfile: () -> Unit,
+    onNavigateToHistory: () -> Unit,
     onNavigateToReceipts: () -> Unit,
     onNavigateToHelp: () -> Unit,
-    onNavigateToChildDetails: (studentId: String) -> Unit
+    onNavigateToNotifications: () -> Unit,
+    onChildClicked: (String, String, String, String, String, String) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
     Scaffold(
         topBar = {
-            DashboardTopAppBar(
-                notificationCount = uiState.notificationCount,
-                onNotificationClick = { /* TODO */ }
+            DashboardTopBar(
+                // This connects the UI to the ViewModel's state
+                unreadCount = uiState.unreadNotificationCount,
+                onNavigateToNotifications = onNavigateToNotifications
             )
         },
         bottomBar = {
-            // --- FIX 3: Pass the correct callbacks for the bottom bar ---
-            DashboardBottomNavigationBar(
+            DashboardBottomNavigation(
                 onNavigateToHistory = onNavigateToHistory,
                 onNavigateToProfile = onNavigateToProfile
             )
-        }
-    ) { innerPadding ->
-        Box(
-            modifier = Modifier
-                .padding(innerPadding)
-                .fillMaxSize()
-        ) {
+        },
+        containerColor = Color(0xFFF9FAFB)
+    ) { padding ->
+        Box(modifier = Modifier.fillMaxSize().padding(padding)) {
             when {
-                uiState.isLoading -> {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-                }
-                uiState.error != null -> {
-                    DashboardErrorState()
-                }
-                else -> {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        item { TotalBalanceCard(userName = uiState.userName, balance = uiState.totalBalance) }
-                        item {
-                            Text(
-                                text = "My Children",
-                                style = MaterialTheme.typography.titleMedium,
-                                modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
-                            )
-                        }
-                        items(uiState.children) { child ->
-                            ChildCard(
-                                child = child,
-                                onClick = { onNavigateToChildDetails(child.studentId) }
-                            )
-                        }
-                        // --- FIX 4: Pass the correct callbacks for Quick Actions ---
-                        item {
-                            QuickActionsSection(
-                                onReceiptsClick = onNavigateToReceipts,
-                                onHelpClick = onNavigateToHelp
-                            )
-                        }
+                uiState.isLoading -> LoadingIndicator()
+                uiState.error != null -> ErrorMessage(uiState.error!!)
+                uiState.summary != null -> DashboardContent(
+                    summary = uiState.summary!!,
+                    onChildClicked = onChildClicked,
+                    onNavigateToReceipts = onNavigateToReceipts,
+                    onNavigateToHelp = onNavigateToHelp
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun DashboardContent(
+    summary: DashboardSummaryResponse,
+    onChildClicked: (String, String, String, String, String, String) -> Unit,
+    onNavigateToReceipts: () -> Unit,
+    onNavigateToHelp: () -> Unit
+) {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize().padding(horizontal = 24.dp),
+        contentPadding = PaddingValues(top = 8.dp, bottom = 24.dp),
+        verticalArrangement = Arrangement.spacedBy(24.dp)
+    ) {
+        item {
+            BlueBalanceCard(
+                userName = summary.user.full_name.substringBefore(" "),
+                financialSummary = summary.financial_summary
+            )
+        }
+
+        item {
+            Text("My Children", fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, color = Color(0xFF111827))
+        }
+
+        items(summary.children) { child ->
+            ChildSummaryCard(
+                child = child,
+                onChildClicked = {
+                    val fullName = "${child.first_name} ${child.last_name}"
+
+                    // --- NEW CODE: Find the real obligation for this child ---
+                    // We look through the upcoming_obligations list to find the one matching this child
+                    val realObligation = summary.upcoming_obligations.firstOrNull {
+                        it.student_name.contains(child.first_name, ignoreCase = true)
                     }
+
+                    // Grab the real obligation ID (like 1206), or default to "0" if missing
+                    val obligationIdToPay = realObligation?.id?.toString() ?: "0"
+
+                    // Grab the real item name (like "Lab Fee"), or use your fallback
+                    val actualItemName = realObligation?.description ?: if (child.outstanding_balance < 5000 && child.outstanding_balance > 0) "Trip" else "School Fees"
+
+                    val rawAmount = child.outstanding_balance.toInt().toString()
+
+                    val statusText = when {
+                        child.outstanding_balance > 20000 -> "Overdue"
+                        child.outstanding_balance > 0 -> "Due soon"
+                        else -> "Paid"
+                    }
+
+                    onChildClicked(
+                        android.net.Uri.encode(obligationIdToPay), // NOW PASSES THE OBLIGATION ID!
+                        android.net.Uri.encode(fullName),
+                        android.net.Uri.encode(child.school_name),
+                        android.net.Uri.encode(rawAmount),
+                        android.net.Uri.encode(statusText),
+                        android.net.Uri.encode(actualItemName) // NOW PASSES THE REAL FEE NAME!
+                    )
+                }
+            )
+        }
+
+        item {
+            Text("Quick Actions", fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, color = Color(0xFF111827))
+            Spacer(modifier = Modifier.height(8.dp))
+            QuickActionsRow(onNavigateToReceipts = onNavigateToReceipts, onNavigateToHelp = onNavigateToHelp)
+        }
+    }
+}
+
+@Composable
+fun BlueBalanceCard(userName: String, financialSummary: FinancialSummary) {
+    var isBalanceVisible by remember { mutableStateOf(true) }
+    val gradientBrush = Brush.linearGradient(colors = listOf(Color(0xFF3B82F6), Color(0xFF60A5FA)))
+
+    Box(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(gradientBrush).padding(24.dp)) {
+        Column {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Text("Hello $userName!", color = Color(0xFFD1FAE5), fontSize = 16.sp, fontWeight = FontWeight.Medium)
+                IconButton(onClick = { isBalanceVisible = !isBalanceVisible }) {
+                    Icon(if (isBalanceVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff, null, tint = Color.White)
+                }
+            }
+            Text("Total Outstanding Balance", color = Color.White.copy(alpha = 0.8f), fontSize = 14.sp)
+            Text(
+                text = if (isBalanceVisible) "Ksh ${String.format("%,.0f", financialSummary.total_outstanding_balance)}" else "Ksh ••••••",
+                color = Color.White, fontSize = 32.sp, fontWeight = FontWeight.ExtraBold
+            )
+        }
+    }
+}
+
+@Composable
+fun ChildSummaryCard(child: ChildDetail, onChildClicked: () -> Unit) {
+    Card(
+        modifier = Modifier.fillMaxWidth().clickable { onChildClicked() },
+        shape = RoundedCornerShape(12.dp), colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Row(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+            Box(modifier = Modifier.size(48.dp).background(Color(0xFF84CC16), CircleShape), contentAlignment = Alignment.Center) {
+                Text(child.first_name.first().toString(), color = Color.White, fontWeight = FontWeight.Bold)
+            }
+            Spacer(modifier = Modifier.width(16.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text("${child.first_name} ${child.last_name}", fontWeight = FontWeight.Bold, color = Color(0xFF111827))
+                Text(child.school_name, fontSize = 12.sp, color = Color.Gray)
+            }
+            Column(horizontalAlignment = Alignment.End) {
+                Text("Ksh ${child.outstanding_balance.toInt()}", fontWeight = FontWeight.Bold)
+                val (pillColor, pillText) = when {
+                    child.outstanding_balance > 20000 -> Color(0xFFEF4444) to "Overdue"
+                    child.outstanding_balance > 0 -> Color(0xFFF59E0B) to "Due soon"
+                    else -> Color(0xFF10B981) to "Paid"
+                }
+                Box(modifier = Modifier.background(pillColor.copy(alpha = 0.1f), RoundedCornerShape(16.dp)).padding(horizontal = 8.dp, vertical = 2.dp)) {
+                    Text(pillText, color = pillColor, fontSize = 10.sp, fontWeight = FontWeight.Bold)
                 }
             }
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun DashboardTopAppBar(
-    notificationCount: Int,
-    onNotificationClick: () -> Unit
+fun DashboardTopBar(
+    unreadCount: Int, // The dynamic count injected from the Scaffold
+    onNavigateToNotifications: () -> Unit
 ) {
     TopAppBar(
         title = {
-            Image(
-                painter = painterResource(id = R.drawable.ic_logo),
-                contentDescription = "EduPay Logo",
-                modifier = Modifier.height(28.dp)
-            )
+            Text(buildAnnotatedString {
+                withStyle(SpanStyle(Color(0xFF10B981), fontWeight = FontWeight.ExtraBold)) { append("Edu") }
+                withStyle(SpanStyle(Color(0xFF3B82F6), fontWeight = FontWeight.ExtraBold)) { append("Pay") }
+            })
         },
         actions = {
-            BadgedBox(
-                badge = {
-                    if (notificationCount > 0) {
-                        Badge { Text("$notificationCount") }
+            IconButton(onClick = onNavigateToNotifications) {
+                BadgedBox(
+                    badge = {
+                        // Only draw the red dot if there are actually unread notifications
+                        if (unreadCount > 0) {
+                            Badge(
+                                containerColor = Color.Red,
+                                contentColor = Color.White,
+                                modifier = Modifier.offset(x = (-4).dp, y = 4.dp)
+                            ) {
+                                Text("$unreadCount", fontSize = 10.sp)
+                            }
+                        }
                     }
-                }
-            ) {
-                IconButton(onClick = onNotificationClick) {
-                    Icon(Icons.Default.Notifications, contentDescription = "Notifications")
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Notifications,
+                        contentDescription = "Notifications",
+                        tint = Color(0xFF111827)
+                    )
                 }
             }
-        }
+        },
+        colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFFF9FAFB))
     )
 }
 
 @Composable
-private fun TotalBalanceCard(userName: String, balance: Double) {
+fun DashboardBottomNavigation(onNavigateToHistory: () -> Unit, onNavigateToProfile: () -> Unit) {
+    NavigationBar(containerColor = Color.White) {
+        NavigationBarItem(selected = true, onClick = {}, icon = { Icon(Icons.Filled.Home, null) }, label = { Text("Home") })
+        NavigationBarItem(selected = false, onClick = onNavigateToHistory, icon = { Icon(Icons.Outlined.Schedule, null) }, label = { Text("History") })
+        NavigationBarItem(selected = false, onClick = onNavigateToProfile, icon = { Icon(Icons.Outlined.PersonOutline, null) }, label = { Text("Profile") })
+    }
+}
+
+@Composable
+fun QuickActionsRow(onNavigateToReceipts: () -> Unit, onNavigateToHelp: () -> Unit) {
+    Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+        QuickActionCard("Receipts", Icons.Outlined.ReceiptLong, onNavigateToReceipts)
+        QuickActionCard("Help", Icons.Outlined.HelpOutline, onNavigateToHelp)
+    }
+}
+
+@Composable
+fun QuickActionCard(title: String, icon: androidx.compose.ui.graphics.vector.ImageVector, onClick: () -> Unit) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF3B82F6))
+        modifier = Modifier.size(100.dp).clickable { onClick() },
+        shape = RoundedCornerShape(12.dp), colors = CardDefaults.cardColors(containerColor = Color.White),
+        border = BorderStroke(1.dp, Color(0xFFE5E7EB))
     ) {
-        Column(modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text("Hello, $userName!", color = Color.White, fontSize = 18.sp)
-                Icon(
-                    Icons.Default.Visibility,
-                    contentDescription = "Toggle visibility",
-                    tint = Color.White
-                )
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-            Text("Total Outstanding Balance", color = Color.White.copy(alpha = 0.8f))
-            Text(
-                "KES ${"%,.2f".format(balance)}",
-                color = Color.White,
-                fontSize = 32.sp,
-                fontWeight = FontWeight.Bold
-            )
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun ChildCard(child: Child, onClick: () -> Unit) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        onClick = onClick
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(child.name, fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
-                Text("${child.school} - Grade ${child.grade}", color = Color.Gray, fontSize = 14.sp)
-            }
-            Spacer(Modifier.width(12.dp))
-            Column(horizontalAlignment = Alignment.End) {
-                Text(
-                    "KES ${"%,.2f".format(child.balance)}",
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 16.sp,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Text(
-                    child.status,
-                    color = child.statusColor,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Medium
-                )
-            }
-            Icon(
-                Icons.Default.ChevronRight,
-                contentDescription = "View Details",
-                tint = Color.Gray
-            )
+        Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+            Icon(icon, null, tint = Color.Gray)
+            Text(title, fontSize = 12.sp)
         }
     }
 }
 
 @Composable
-private fun QuickActionsSection(
-    onReceiptsClick: () -> Unit,
-    onHelpClick: () -> Unit
-) {
-    Column(modifier = Modifier.padding(top = 16.dp)) {
-        Text("Quick Actions", style = MaterialTheme.typography.titleMedium)
-        Spacer(modifier = Modifier.height(16.dp))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            QuickActionItem(icon = Icons.Default.Receipt, label = "Receipts", onClick = onReceiptsClick)
-            QuickActionItem(icon = Icons.Default.HelpOutline, label = "Help", onClick = onHelpClick)
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun RowScope.QuickActionItem(
-    icon: ImageVector,
-    label: String,
-    onClick: () -> Unit
-) {
-    Card(
-        modifier = Modifier.weight(1f),
-        shape = RoundedCornerShape(12.dp),
-        onClick = onClick
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Icon(icon, contentDescription = label, tint = MaterialTheme.colorScheme.primary)
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(label, fontSize = 14.sp, textAlign = TextAlign.Center)
-        }
-    }
-}
+fun LoadingIndicator() { Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = Color(0xFF3B82F6)) } }
 
 @Composable
-private fun DashboardBottomNavigationBar(
-    // --- FIX 5: Change parameters to match what the Scaffold is sending ---
-    onNavigateToHistory: () -> Unit,
-    onNavigateToProfile: () -> Unit
-) {
-    NavigationBar {
-        NavigationBarItem(
-            icon = { Icon(Icons.Default.Home, contentDescription = "Home") },
-            label = { Text("Home") },
-            selected = true,
-            onClick = { /* Already on Home */ }
-        )
-
-        NavigationBarItem(
-            icon = { Icon(Icons.Default.History, contentDescription = "History") },
-            label = { Text("History") },
-            selected = false,
-            onClick = onNavigateToHistory
-        )
-        // --- FIX 7: Change to Profile ---
-        NavigationBarItem(
-            icon = { Icon(Icons.Default.Person, contentDescription = "Profile") },
-            label = { Text("Profile") },
-            selected = false,
-            onClick = onNavigateToProfile
-        )
-    }
-}
-
-@Composable
-private fun DashboardErrorState() {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Icon(
-            Icons.Default.Warning,
-            contentDescription = "Error",
-            tint = Color.Red,
-            modifier = Modifier.size(48.dp)
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = "Couldn't fetch Dashboard data right now.",
-            textAlign = TextAlign.Center,
-            color = Color.Gray
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        Button(onClick = { /* TODO: Implement retry logic in ViewModel */ }) {
-            Text("Retry")
-        }
-    }
-}
+fun ErrorMessage(msg: String) { Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text(msg, color = Color.Red) } }
