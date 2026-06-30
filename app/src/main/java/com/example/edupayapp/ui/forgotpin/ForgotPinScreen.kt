@@ -27,7 +27,7 @@ import com.example.edupayapp.ui.common.InputField
 fun ForgotPinScreen(
     viewModel: ForgotPinViewModel = viewModel(),
     onNavigateToOtp: (email: String) -> Unit,
-    onNavigateToLogin: () -> Unit // <-- NEW: Callback to go back to Login
+    onNavigateToLogin: () -> Unit // <--  Callback to go back to Login
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
